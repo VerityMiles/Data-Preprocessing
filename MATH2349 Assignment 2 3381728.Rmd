@@ -1,0 +1,218 @@
+---
+title: "MATH2349 Semester 2, 2018"
+author: "Sam Holt 3381728"
+subtitle: Assignment 2
+output:
+  html_notebook: default
+---
+
+## Setup
+
+Install and load the necessary packages to reproduce the report here:
+
+```{r, echo = TRUE, message=FALSE}
+
+library(readr)
+library(tidyr)
+library(dplyr)
+library(Hmisc)
+library(outliers)
+library(DescTools)
+```
+
+
+## Read WHO Data
+
+Read the WHO data using an appropriate function.
+
+```{r}
+
+who <- read_csv('WHO.csv')
+species <- read_csv('species.csv')
+surveys <- read_csv('surveys.csv')
+head(who)
+head(species)
+head(surveys)
+```
+
+
+
+
+## Tidy Task 1:
+
+Use appropriate `tidyr` functions to reshape the WHO data set into the form given in the MATH2349_1810 Assignment_2 instructions document. 
+
+
+```{r, echo=TRUE}
+
+who2 <- who %>% gather(code, value, 5:length(who))
+head(who2)
+
+```
+
+
+
+## Tidy Task 2:
+
+The WHO data set is not in a tidy format yet. The `code` column still contains four different variables' information (see variable description section for the details). Separate the `code` column and form four new variables using appropriate `tidyr` functions.  The final format of the WHO data set for this task should be in the form given in the MATH2349_1810 Assignment_2 instructions document.  
+
+
+```{r}
+
+who3 <- who2 %>% separate(code, c('new','var','sexage'), sep = '_')
+who4 <- who3 %>%  separate(sexage, c('sex','age'), sep = "(?<=[a-z])(?=[0-9])")
+head(who4)
+
+```
+
+
+## Tidy Task 3:
+
+The WHO data set is not in a tidy format yet. The `rel`, `ep`, `sn`, and `sp` keys need to be in their own columns as we will treat each of these as a separate variable. In this step, move the `rel`, `ep`, `sn`, and `sp` keys into their own columns. The final version of the WHO data set for this task should be in the form given in the MATH2349_1810 Assignment_2 instructions document.  
+
+
+```{r}
+
+who5 <- who4 %>% spread(var, value)
+head(who5)
+
+```
+
+
+## Tidy Task 4: 
+
+There is one more step to tidy WHO data set. We have two categorical variables `sex` and `age`. Use `mutate()` to factorise sex and age. For age variable, you need to create labels and also order the variable. Labels would be: <15, 15-24, 25-34, 35-44, 45-54, 55-64, 65>=. The final tidy version of the WHO data set would be in the form given in the MATH2349_1810 Assignment_2 instructions document.
+
+
+```{r}
+
+who6 <- who5 %>% mutate(age = factor(age, 
+                                     levels = c("014","1524","2534","3544","4554","5564","65"),
+                                     labels = c('<15','15-24','25-34','35-44','45-54','55-64','65>=')))
+head(who6)
+
+```
+
+## Task 5: Filter & Select
+
+
+Drop the redundant columns `iso2` and `new`, and filter any three countries from the tidy version of the WHO data set. Name this subset of the data frame as `WHO_subset`.
+
+```{r}
+head(who6)
+who_sel <- who6 %>% dplyr::select(-c(2,5)) 
+WHO_subset <- who_sel %>%  filter(iso3 == c('AUS','KOR','USA')) 
+head(WHO_subset)
+
+```
+
+
+
+## Read Species and Surveys data sets
+
+Read the Species and Surveys data sets using an appropriate function. Name these data frames as `species` and `surveys`, respectively.
+
+```{r}
+
+species <- read_csv('species.csv')
+
+surveys <- read_csv('surveys.csv')
+
+head(species)
+
+head(surveys)
+
+```
+
+
+
+
+## Task 6: Join  
+
+Combine `surveys` and `species` data frames using the key variable `species_id`. **For this task, you need to add the species information (`genus`, `species`, `taxa`) to the `surveys` data**.  Rename the combined data frame as `surveys_combined`.
+
+
+```{r}
+
+View(species)
+
+View(surveys)
+
+surveys_combined <- surveys %>% left_join(species, by = 'species_id')
+View(surveys_combined)
+
+```
+
+
+
+## Task 7: Calculate 
+
+Using the `surveys_combined` data frame, calculate the average weight and hindfoot length of one of the species observed in each month (irrespective of the year). Make sure to exclude missing values while calculating the average.
+
+
+```{r}
+
+surveys_combined %>%  filter(species == 'merriami') %>% group_by(month) %>%  summarise(`Merriami Mean` = mean(hindfoot_length, na.rm = TRUE))
+
+```
+
+
+
+## Task 8: Missing Values
+
+Select one of the years in the `surveys_combined` data frame, rename this data set as `surveys_combined_year`. Using `surveys_combined_year` data frame, find the total missing values in `weight` column grouped by `species`. Replace the missing values in `weight` column with the mean values of each species. Save this imputed data as `surveys_weight_imputed`.
+
+
+```{r}
+
+surveys_combined_year <- surveys_combined %>% filter(year == 1993)
+surveys_combined_year %>% group_by(species) %>% summarise(Missing = sum(is.na(weight)))
+surveys_weight_imputed <- surveys_combined_year %>%  group_by(species) %>% mutate(weight = ifelse(is.na(weight), mean(weight, na.rm = TRUE), weight))
+surveys_weight_imputed %>% group_by(species) %>% summarise(Missing = sum(is.na(weight)), Mean = mean(weight))
+# there are still missing data this is due to the entire species only having NA values in the weight column, the mean of only NAs is NAN                      
+```
+
+
+
+
+
+## Task 9: Inconsistencies or Special Values
+
+Inspect the `weight` column in `surveys_weight_imputed` data frame for any further inconsistencies or special values (i.e., NaN, Inf, -Inf) . Trace back and explain briefly why you got such a value.
+
+```{r}
+
+is.special <- function(x){
+  if (is.numeric(x)) !is.finite(x) else is.na(x)
+}
+any(is.special(surveys_weight_imputed$weight))
+summary()
+#there are NaN values for some of the factors, this is due to entire species having NA values for weight, even with mean(x, na.rm=TRUE), which just causes 0/0 resulting in NaN values
+
+```
+
+
+
+
+## Task 10: Outliers
+
+Using the `surveys_combined` data frame, inspect the variable hindfoot length for possible univariate outliers. If you detect any outliers use any of the methods outlined in the Module 6 notes to deal with them. Explain briefly the actions that you take to handle outliers. 
+
+```{r}
+
+hist(surveys_combined$hindfoot_length, breaks = 30) #does not seem to be normally distributed
+x <- boxplot(surveys_combined$hindfoot_length) #hence the Tukey method is used
+x$out
+IQR(surveys_combined$hindfoot_length, na.rm = TRUE) * 3
+# Winsorising the outliers as they don't follow a normal distribution nor are they extreme (neither exceed 3*IQR)
+
+# Winsorising with the Winsorize() function from the DescTools Package
+surveys_combined_capped <- Winsorize(surveys_combined$hindfoot_length, na.rm = TRUE)
+summary(surveys_combined_capped)
+boxplot(surveys_combined_capped,
+        main = 'Hindfoot Length After Winsorising',
+        ylab = 'Hindfoot Length')
+
+```
+
+
