@@ -1,0 +1,240 @@
+---
+title: "MATH2349 Semester 2, 2018"
+author: "Meg Cuddihy (sxxxxxx), Sam Holt (s3381728), Verity Miles (s3644459)"
+subtitle: Assignment 2
+output:
+  html_notebook: default
+---
+
+
+## Setup
+
+Install and load the necessary packages to reproduce the report here:
+
+```{r, echo = TRUE, message=FALSE}
+
+# Loading all the required packages
+
+library(readr)
+library(tidyr)
+library(dplyr)
+library(Hmisc)
+library(outliers)
+library(DescTools)
+library(kableExtra)
+library(mosaic)
+
+```
+
+
+## Import the WHO data
+
+```{r, message = FALSE}
+
+who <- read_csv("Who.csv")
+kable(head(who[,1:5])) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: all code the same
+
+
+## Tidy Task 1:
+
+Use tidyr functions to reshape/ gather the WHO data
+
+```{r, echo=TRUE}
+
+who_tidy1 <- who %>% gather(code, value, 5:length(who))
+kable(head(who_tidy1)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: Sam's code
+
+
+## Tidy Task 2:
+
+Splitting/ separating the code column to get closer to tidy data
+
+```{r}
+
+who_tidy2 <- who_tidy1 %>% 
+  separate(code, c("new", "var", "sex"), sep = "_") %>% 
+  separate(sex, c("sex", "age"), sep = 1)
+
+kable(head(who_tidy2)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: Verity's code
+
+
+## Tidy Task 3:
+
+Spreading the data to get it into a tidy format
+
+```{r}
+
+who_tidy3 <- who_tidy2 %>% spread(var, value)
+
+kable(head(who_tidy3)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: all code the same
+
+
+## Tidy Task 4: 
+
+Mutating and factorising variables
+
+```{r}
+
+who_tidy4 <- who_tidy3 %>% mutate(sex = factor(sex, levels = c("m", "f"), labels = c("m", "f")),
+                                  age = factor(age, levels = c("014", "1524", "2534", "3544", "4554", "5564", "65"),
+                                               labels = c("<15", "15-24", "25-34", "35-44", "45-54", "55-64", "65>="),
+                                               ordered = TRUE))
+
+kable(head(who_tidy4)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: Meg's code
+
+
+## Task 5: Filter & Select
+
+Filtering and selecting the WHO data
+
+```{r}
+
+countries <- c("Fiji", "Germany", "Korea")
+who_subset <- who_tidy4 %>% select(-c(2, 5)) %>% 
+  filter(country %in% countries)
+
+kable(head(who_subset)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: Verity's code
+
+
+## Read Species and Surveys data sets
+
+Importing the species and surveys data
+
+```{r, message = FALSE}
+
+surveys <- read_csv("surveys.csv")
+species <- read_csv("species.csv")
+
+kable(head(surveys)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+kable(head(species)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: all code the same
+
+
+## Task 6: Join  
+
+Join the species and surveys data
+
+```{r}
+
+surveys_combined <- surveys %>% left_join(species[, c("species_id", "genus", "species", "taxa")], by = "species_id")
+
+kable(head(surveys_combined)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: Verity's code
+
+
+## Task 7: Calculate 
+
+Calculating mean weight and hindfoot lengths
+
+```{r}
+
+species_avg <- surveys_combined %>% filter(species == "fulviventer") %>% 
+  group_by(month) %>% 
+  summarise(mean_weights = mean(weight, na.rm = TRUE),
+            mean_foot = mean(hindfoot_length, na.rm = TRUE))
+
+kable(head(species_avg)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+Note: mainly Meg's code
+Anyone have strong feelings about which species we use???
+
+
+## Task 8: Missing Values
+
+Dealing with missing values through imputing
+
+```{r}
+
+surveys_combined_year <- surveys_combined %>% filter(year == "1990") 
+surveys_combined_year %>% group_by(species) %>% summarise(Missing = sum(is.na(weight)))
+surveys_weight_imputed <- surveys_combined_year %>%  group_by(species) %>% mutate(weight = ifelse(is.na(weight), mean(weight, na.rm = TRUE), weight))
+
+```
+Note: Sam's code
+Mean year of birth
+
+There are still missing values as there are some entire species that only have NA values for weight in 1990. The means of these species is NaN.
+
+
+## Task 9: Inconsistencies or Special Values
+
+Checking for inconsistencies in the weight data and explaining why they have occurred.
+
+```{r}
+
+sum(is.nan(surveys_weight_imputed$weight))
+
+is.special <- function(x){
+if (is.numeric(x)) !is.finite(x) else is.na(x)
+}
+
+any(sapply(surveys_weight_imputed$weight, is.special))
+
+surveys_weight_imputed %>% group_by(species) %>% summarise(Missing = sum(is.na(weight)), Mean = mean(weight))
+
+```
+Note: combination of code
+
+Explanation: Some species in the data frame have no values available for weight for any observation of that species. When calculating the mean by species, we have excluded NAs so any species with no weight values recorded will have no valid numbers available for calculation. Therefore, the final output includes NaN (not a number) results for the weights of species with no valid weight observation. 
+
+
+## Task 10: Outliers
+
+Checking for outliers in the hindfoot length data
+
+```{r}
+
+hist(surveys_combined$hindfoot_length, breaks = 30,
+     main = "Histogram of Hind Foot Length",
+     xlab = "Hind Foot Length") #does not seem to be normally distributed
+x <- boxplot(surveys_combined$hindfoot_length,
+             main = "Hind Foot Length") #hence the Tukey method is used
+x$out
+IQR(surveys_combined$hindfoot_length, na.rm = TRUE) * 3
+# Winsorising the outliers as they don't follow a normal distribution nor are they extreme (neither exceed 3*IQR)
+
+# Winsorising with the Winsorize() function from the DescTools Package
+surveys_combined_capped <- Winsorize(surveys_combined$hindfoot_length, na.rm = TRUE)
+summary(surveys_combined_capped)
+boxplot(surveys_combined_capped,
+        main = 'Hindfoot Length After Winsorising',
+        ylab = 'Hindfoot Length')
+
+```
+Note: Sam's code
+
+The hindfoot length data is not normally distributed. The Tukey method was used to transform the data. We chose to winsorise the outliers as they don't follow a normal distribution nor are they very extreme.
