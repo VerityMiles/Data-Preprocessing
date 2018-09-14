@@ -186,6 +186,8 @@ Dealing with missing values through imputing
 surveys_combined_year <- surveys_combined %>% filter(year == "1990") 
 surveys_combined_year %>% group_by(species) %>% summarise(Missing = sum(is.na(weight)))
 surveys_weight_imputed <- surveys_combined_year %>%  group_by(species) %>% mutate(weight = ifelse(is.na(weight), mean(weight, na.rm = TRUE), weight))
+summary(surveys_weight_imputed)
+head(surveys_weight_imputed)
 
 ```
 Note: Sam's code
