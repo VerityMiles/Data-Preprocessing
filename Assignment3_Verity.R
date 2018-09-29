@@ -21,6 +21,8 @@ library(tidyr)
 #library(ggplot2)
 #library(knitr)
 
+#setwd("C:/Users/verit/Documents/RMIT/DataPreprocessing/Assessment/Assignment3")
+
 #Bringing in census data
 education <- read_excel("allVic_education.xls", skip = 8, col_names = TRUE)
 education <- education[-1,-1] #Removing first row and column
@@ -46,8 +48,22 @@ edu_tidy <- transform(edu_tidy, SA1 = as.numeric(SA1))
 
 #Bringing in lookup data
 geo_lookup <- read_csv("SA1_LGA_LookUp.csv")
-View(geo_lookup)
+#View(geo_lookup)
 
 #Adding LGA column to education data
-edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17")], by= c("SA1" = "SA1_7DIG16"))
+edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17", "MetroMelbourne")], by= c("SA1" = "SA1_7DIG16"))
 View(edu_tidy_join)
+summary(edu_tidy_join)
+str(edu_tidy_join)
+
+#Bringing in health-based data
+LGA_health <- read_excel("LGA_Profile_2015.xlsx", col_names = TRUE, sheet = "LGAs")
+View(LGA_health)
+
+Subset_Columns <- c("LGA Name", "Travel time to Melbourne", "Total fertility rate", "Top 5 overseas countries of birth - country 1",
+                    "Top 5 ancestries - ancestry 1", "People who believe multiculturalism makes life better", "People reporting high/very high psychological distress",
+                    "People who live near public transport", "Primary Health Network (PHN)")
+LGA_health_ss <- LGA_health[Subset_Columns]
+View(LGA_health_ss)
+summary(LGA_health_ss)
+str(LGA_health_ss)
