@@ -29,7 +29,7 @@ education <- education[-1,-1] #Removing first row and column
 colnames(education)[1] <- "SA1"
 
 totalrow <- which(education$SA1 == 'Total')
-education <- education[1:totalrow-1,] #Removing empty rows at end of data frame
+education <- education[1:totalrow - 1,] #Removing empty rows at end of data frame
 
 #Tidyr-ing
 edu_tidy <- gather(education, "Ed_level", "People", 2:length(education))
@@ -92,6 +92,8 @@ edu_uni_tot <- education %>%  mutate(Post = (education$`Postgraduate Degree Leve
 head(edu_uni_tot)
 edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
 edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
+head(edu_uni_tot2)
+
 # spread then mutate, will be easier
 box_post_tot <- boxplot(edu_uni_tot2[,2], main  = 'Post Grad Students per Region')
 length(box_post_tot$out) # 532 outliers for post grad
@@ -136,6 +138,22 @@ edu_under <- edu_tidy_join %>%  filter(Ed_level == 'Bachelor Degree Level')
 edu_under_log <- log(edu_under$People)
 hist(edu_under$People)
 hist(edu_under_log)
+
+
+
+##############################
+# Summary
+##############################
+
+edu_prop_sum <- edu_uni_prop2 %>%  group_by(LGA_NAME17) %>%  summarise(meanPost = mean(Post, na.rm = TRUE),
+                                                                       medianPost = median(Post, na.rm = TRUE),
+                                                                       maxPost = max(Post, na.rm = TRUE),
+                                                                       minPost = min(Post, na.rm = TRUE),
+                                                                       meanUnder = mean(UnderGrad, na.rm = TRUE),
+                                                                       medianUnder = median(UnderGrad, na.rm = TRUE),
+                                                                       maxUnder = max(UnderGrad, na.rm = TRUE),
+                                                                       minUnder = min(UnderGrad, na.rm = TRUE))
+View(edu_prop_sum)
 
 ##############################
 # Regression Machine Learning
