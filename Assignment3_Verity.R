@@ -115,6 +115,9 @@ boxplot(edu_uni_tot2[,2:3])
 boxplot(edu_uni_prop2[,2:3]) # both visuals
 # finding proportions drastically reduces the count of outliers
 
+### Now what to do with outliers?
+
+
 ##############################
 # Transformation
 ##############################
@@ -123,11 +126,16 @@ edu_post <- edu_tidy_join %>%  filter(Ed_level == 'Postgraduate Degree Level')
 
 hist(edu_post$People)
 
-edu_people_log <- log(edu_post$People)
+edu_post_log <- log(edu_post$People)
 
-hist(edu_people_log) # log transformation shows a clear normal distribution
+hist(edu_post_log) # log transformation shows a clear normal distribution
 
 
+edu_under <- edu_tidy_join %>%  filter(Ed_level == 'Bachelor Degree Level')
+
+edu_under_log <- log(edu_under$People)
+hist(edu_under$People)
+hist(edu_under_log)
 
 ##############################
 # Regression Machine Learning
