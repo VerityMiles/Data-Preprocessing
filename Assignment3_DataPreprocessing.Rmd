@@ -1,0 +1,72 @@
+---
+title: "Assignment3_DataPreprocessing"
+author: "Verity Miles, Sam Holt, Meg Cuddihy"
+date: "14 October 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+###Data
+####Data set 1
+We have used three different datasets.¬¬
+The first data set that we used comes from the 2016 Australian Census made available by the Australian Bureau of Statistics (ABS). We used a public TableBuilder account (https://auth.censusdata.abs.gov.au/webapi/jsf/login.xhtml) to extract education level for each SA1 within Victoria. SA1s are the smallest geographic unit that the majority of census data is available at. They generally have a population of between 200 and 800 people (http://www.abs.gov.au/ausstats/abs@.nsf/Lookup/by%20Subject/1270.0.55.001~July%202016~Main%20Features~Statistical%20Area%20Level%201%20(SA1)~10013).
+
+The columns in this data set are:
+.	SA1 7 digit code
+.	Postgraduate Degree Level
+.	Graduate Diploma and Graduate Certificate Level
+.	Bachelor Degree Level
+.	Advanced Diploma and Diploma Level
+.	Certificate III & IV Level
+.	Secondary Education Years 10 and above
+.	Certificate I &II Level
+.	Secondary Education Years 9 and below
+.	Supplementary Codes
+.	Not stated
+.	Not applicable
+.	Total
+
+####Data set 2
+The second data set that we used is a geographic lookup linking SA1s to local government areas (LGAs) and the Greater Capital City Statistical Area (GCCSA) of Greater Melbourne. We compiled this lookup using geographic files for SA1s and LGAs from the ABS and did a spatial join (within QGIS). The columns in this data set are:
+.	SA1_MAIN16
+.	SA1_7DIG16
+.	SA2_MAIN16
+.	SA2_5DIG16
+.	SA2_NAME16
+.	STE_NAME16
+.	LGA_NAME17
+.	STE_NAME17
+.	MetroMelbourne
+
+####Data set 3
+The third data set that we used is developed by the Department of Health and Human Services. They produce profiles for every LGA within Victoria annually. The data that we used is from the 2015 profile (the latest available). We downloaded the data from the following source:
+https://www.data.vic.gov.au/data/dataset/2015-local-government-area-profiles
+This data set contains many different variables. We have chosen to import only a subset of the variables. This includes:
+.	LGA Name
+.	Travel time to Melbourne
+.	Total fertility rate
+.	Top 5 overseas countries of birth - country 1
+.	Top 5 ancestries - ancestry 1
+.	People who believe multiculturalism makes life better
+.	People reporting high/very psychological distress
+.	People who live near public transport
+.	Primary Health Network (PHN)
+.	Median household income
+
+
+SA1 education data
+This data contains 3 different variables. These are SA1 7 digit code (census geography where each SA1 contains ~400 people), education level (character variable) and people (numeric).
+
+The data is not tidy as the people variables currently does not have its own column.
+
+Convert to tidy
+(Add in code here)
+
+Converted education level to factor. Need to check if can include Totals in factor data. I propose we view N/A as the lowest factor and N/S as missing data. N/S - maybe take average or ignore
+
+The SA1 column came through as character data. We have converted it to numeric.
