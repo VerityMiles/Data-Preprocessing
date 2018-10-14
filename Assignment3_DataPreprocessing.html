@@ -133,46 +133,126 @@ $(document).ready(function () {
 <div id="data-set-1-education-levels" class="section level4">
 <h4>Data set 1: Education Levels</h4>
 <p>The first data set that we used comes from the 2016 Australian Census made available by the Australian Bureau of Statistics (ABS). We used a public TableBuilder account to extract education level for each SA1 within Victoria. <a href="https://auth.censusdata.abs.gov.au/webapi/jsf/login.xhtml">Click here for information on TableBuilder</a>. SA1s are the smallest geographic unit that the majority of census data is available at. They generally have a population of between 200 and 800 people. <a href="http://www.abs.gov.au/ausstats/abs@.nsf/Lookup/by%20Subject/1270.0.55.001~July%202016~Main%20Features~Statistical%20Area%20Level%201%20(SA1)~10013">Click here for more information</a>.</p>
-<p>The columns in this data set are:<br />
-* SA1 7 digit code<br />
-* Postgraduate Degree Level<br />
-* Graduate Diploma and Graduate Certificate Level<br />
-* Bachelor Degree Level<br />
-* Advanced Diploma and Diploma Level<br />
-* Certificate III &amp; IV Level<br />
-* Secondary Education Years 10 and above<br />
-* Certificate I &amp;II Level<br />
-* Secondary Education Years 9 and below<br />
-* Supplementary Codes<br />
-* Not stated<br />
-* Not applicable<br />
-* Total</p>
+The columns in this data set are:<br />
+
+<ul>
+<li>
+SA1 7 digit code<br />
+
+<li>
+Postgraduate Degree Level<br />
+
+<ul>
+<li>
+Doctoral Degree Level
+</ul>
+<ul>
+<li>
+Masters Degree Level
+</ul>
+<li>
+Graduate Diploma and Graduate Certificate Level<br />
+
+<li>
+Bachelor Degree Level<br />
+
+<li>
+Advanced Diploma and Diploma Level<br />
+
+<li>
+Certificate III &amp; IV Level<br />
+
+<li>
+Secondary Education Years 10 and above<br />
+
+<li>
+Certificate I &amp;II Level<br />
+
+<li>
+Secondary Education Years 9 and below<br />
+
+<li>
+Supplementary Codes<br />
+
+<li>
+Not stated<br />
+
+<li>
+Not applicable<br />
+
+<li>
+Total
+</ul>
+<p>The different education levels are coded as per the Australian Classification of Education (ASCED) 2001. For more information click <a href="http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1272.0Main%20Features12001?opendocument&amp;tabname=Summary&amp;prodno=1272.0&amp;issue=2001&amp;num=&amp;view=">here</a>.</p>
 </div>
 <div id="data-set-2-geographic-look-up" class="section level4">
 <h4>Data set 2: Geographic Look Up</h4>
 <p>The second data set that we used is a geographic lookup linking SA1s to local government areas (LGAs) and the Greater Capital City Statistical Area (GCCSA) of Greater Melbourne. We compiled this lookup using geographic files for SA1s and LGAs from the ABS and did a spatial join (within QGIS). <a href="https://www.qgis.org/en/site/">Click here for more information about QGIS</a>.</p>
-<p>The columns in this data set are:<br />
-* SA1_MAIN16<br />
-* SA1_7DIG16<br />
-* SA2_NAME16<br />
-* STE_NAME16<br />
-* LGA_NAME17<br />
-* MetroMelbourne</p>
+The columns in this data set are:<br />
+
+<ul>
+<li>
+SA1_7DIG16<br />
+
+<ul>
+<li>
+7 digit unique identifier for SA1
+</ul>
+<ul>
+<li>
+Should be numeric
+</ul>
+<li>
+LGA_NAME17<br />
+
+<ul>
+<li>
+Local council name
+</ul>
+<li>
+MetroMelbourne<br />
+
+<ul>
+<li>
+Indicator of whether the SA1 is within metropolitan Melbourne
+</ul>
 </div>
 <div id="data-set-3-council-profiles" class="section level4">
 <h4>Data set 3: Council Profiles</h4>
 <p>The third data set that we used is developed by the Department of Health and Human Services. They produce profiles for every LGA within Victoria annually. The data that we used is from the 2015 profile (the latest available). We downloaded the data from the following <a href="https://www.data.vic.gov.au/data/dataset/2015-local-government-area-profiles">source</a>. This data set contains many different variables. We have chosen to import only a subset of the variables.</p>
-<p>This includes:<br />
-* LGA Name<br />
-* Travel time to Melbourne<br />
-* Total fertility rate<br />
-* Top 5 overseas countries of birth - country 1<br />
-* Top 5 ancestries - ancestry 1<br />
-* People who believe multiculturalism makes life better<br />
-* People reporting high/very psychological distress<br />
-* People who live near public transport<br />
-* Primary Health Network (PHN)<br />
-* Median household income</p>
+This includes:<br />
+
+<ul>
+<li>
+LGA Name<br />
+
+<li>
+Travel time to Melbourne<br />
+
+<li>
+Total fertility rate<br />
+
+<li>
+Top 5 overseas countries of birth - country 1<br />
+
+<li>
+Top 5 ancestries - ancestry 1<br />
+
+<li>
+People who believe multiculturalism makes life better<br />
+
+<li>
+People reporting high/very psychological distress<br />
+
+<li>
+People who live near public transport<br />
+
+<li>
+Primary Health Network (PHN)<br />
+
+<li>
+Median household income
+</ul>
 <p>SA1 education data This data contains 3 different variables. These are SA1 7 digit code (census geography where each SA1 contains ~400 people), education level (character variable) and people (numeric).</p>
 <p>The data is not tidy as the people variables currently does not have its own column.</p>
 <p>Convert to tidy (Add in code here)</p>

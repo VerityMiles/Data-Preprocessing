@@ -13,46 +13,55 @@ We have used three different datasets.
 The first data set that we used comes from the 2016 Australian Census made available by the Australian Bureau of Statistics (ABS). We used a public TableBuilder account to extract education level for each SA1 within Victoria. [Click here for information on TableBuilder](https://auth.censusdata.abs.gov.au/webapi/jsf/login.xhtml). SA1s are the smallest geographic unit that the majority of census data is available at.   They generally have a population of between 200 and 800 people. [Click here for more information](http://www.abs.gov.au/ausstats/abs@.nsf/Lookup/by%20Subject/1270.0.55.001~July%202016~Main%20Features~Statistical%20Area%20Level%201%20(SA1)~10013).  
 
 The columns in this data set are:  
-* SA1 7 digit code  
-*	Postgraduate Degree Level  
-*	Graduate Diploma and Graduate Certificate Level  
-*	Bachelor Degree Level  
-*	Advanced Diploma and Diploma Level  
-*	Certificate III & IV Level  
-*	Secondary Education Years 10 and above  
-*	Certificate I &II Level  
-*	Secondary Education Years 9 and below  
-*	Supplementary Codes  
-*	Not stated  
-*	Not applicable  
-*	Total  
+<ul>
+<li> SA1 7 digit code  
+<li> Postgraduate Degree Level  
+<ul><li> Doctoral Degree Level </ul> 
+<ul><li> Masters Degree Level  </ul>
+<li> Graduate Diploma and Graduate Certificate Level  
+<li> Bachelor Degree Level  
+<li> Advanced Diploma and Diploma Level  
+<li> Certificate III & IV Level  
+<li> Secondary Education Years 10 and above  
+<li> Certificate I &II Level  
+<li> Secondary Education Years 9 and below  
+<li> Supplementary Codes  
+<li> Not stated  
+<li> Not applicable  
+<li> Total  </ul>
+
+The different education levels are coded as per the Australian Classification of Education (ASCED) 2001. For more information click [here](http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1272.0Main%20Features12001?opendocument&tabname=Summary&prodno=1272.0&issue=2001&num=&view=).
 
 ####Data set 2: Geographic Look Up
 The second data set that we used is a geographic lookup linking SA1s to local government areas (LGAs) and the Greater Capital City Statistical Area (GCCSA) of Greater Melbourne. We compiled this lookup using geographic files for SA1s and LGAs from the ABS and did a spatial join (within QGIS).  [Click here for more information about QGIS](https://www.qgis.org/en/site/).  
 
 The columns in this data set are:  
-*	SA1_MAIN16  
-*	SA1_7DIG16  
-*	SA2_NAME16  
-*	STE_NAME16  
-*	LGA_NAME17  
-*	MetroMelbourne  
+<ul>
+<li> SA1_7DIG16  
+<ul><li> 7 digit unique identifier for SA1</ul>
+<ul><li> Should be numeric</ul>
+<li> LGA_NAME17  
+<ul><li> Local council name</ul>
+<li> MetroMelbourne  
+<ul><li> Indicator of whether the SA1 is within metropolitan Melbourne</ul>
+
 
 ####Data set 3: Council Profiles
 The third data set that we used is developed by the Department of Health and Human Services. They produce profiles for every LGA within Victoria annually. The data that we used is from the 2015 profile (the latest available). We downloaded the data from the following [source](https://www.data.vic.gov.au/data/dataset/2015-local-government-area-profiles).
 This data set contains many different variables. We have chosen to import only a subset of the variables.  
 
 This includes:  
-*	LGA Name  
-*	Travel time to Melbourne  
-*	Total fertility rate  
-*	Top 5 overseas countries of birth - country 1  
-*	Top 5 ancestries - ancestry 1  
-*	People who believe multiculturalism makes life better  
-*	People reporting high/very psychological distress  
-*	People who live near public transport  
-*	Primary Health Network (PHN)  
-*	Median household income  
+<ul>
+<li> LGA Name  
+<li> Travel time to Melbourne  
+<li> Total fertility rate  
+<li> Top 5 overseas countries of birth - country 1  
+<li> Top 5 ancestries - ancestry 1  
+<li> People who believe multiculturalism makes life better  
+<li> People reporting high/very psychological distress  
+<li> People who live near public transport  
+<li> Primary Health Network (PHN)  
+<li> Median household income  </ul>
 
 
 SA1 education data
