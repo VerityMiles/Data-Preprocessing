@@ -69,7 +69,7 @@ summary(LGA_health_ss)
 str(LGA_health_ss)
 
 #########################
-# Outliers with Boxplots
+# Outliers Detection
 #########################
 
 # Post grad and Under Grad count
@@ -119,6 +119,47 @@ boxplot(edu_uni_prop2[,2:3]) # both visuals
 
 ### Now what to do with outliers?
 
+##############################
+# Handling Outliers
+##############################
+
+library(MVN)
+library(outliers)
+
+summary(edu_uni_prop2)
+
+# Replace NAs with 0 values in the proportions (NA's occured due to 0/0 mutate)
+edu_uni_prop2[which(is.na(edu_uni_prop2$Post)),] <- 0
+edu_uni_prop2[which(is.na(edu_uni_prop2$UnderGrad)),] <- 0
+
+
+### very dumb don't use
+set.seed(123)
+samp1 <- sample_n(edu_uni_prop2, size = 5000, replace = FALSE) # use sample_n, sample() is just silly
+
+# MVN MUST take between 3 and 5000 samples only (pointless really...)
+MVN::mvn(samp1[,2:3],
+         multivariateOutlierMethod = 'quan',
+         showOutliers = TRUE,
+         showNewData = TRUE
+         )
+## dumb ^^^ don't use
+
+## not dumb, please use
+cap <- function(x){
+  quantiles <- quantile( x, c(.05, 0.25, 0.75, .95 ) )
+  x[ x < quantiles[2] - 1.5*IQR(x) ] <- quantiles[1]
+  x[ x > quantiles[3] + 1.5*IQR(x) ] <- quantiles[4]
+  x
+} # from Module 6 of MATH 2349, credit to Dr Anil Dolgun
+
+post_cap <- cap(edu_uni_prop2$Post)
+boxplot(post_cap)
+summary(post_cap)
+
+under_cap <- cap(edu_uni_prop2$UnderGrad)
+boxplot(under_cap)
+summary(under_cap)
 
 ##############################
 # Transformation
