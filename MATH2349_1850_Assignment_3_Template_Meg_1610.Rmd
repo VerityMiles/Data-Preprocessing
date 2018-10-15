@@ -1,0 +1,423 @@
+---
+title: "MATH2349 Semester 2, 2018"
+author: "Verity Miles(s3644459), Sam Holt (s3381728), Meg Cuddihy (s3608125)"
+subtitle: Assignment 3
+date: "15 October 2018"
+output:
+  html_notebook: default
+---
+
+You must use the headings and chunks provided in the template, you may add additional sections and R chunks if you require. In the report, all R chunks and outputs needs to be visible. Failure to do so will result in a loss of marks. 
+
+
+This report must be uploaded to Turnitin as a PDF with your code chunks and outputs showing. The easiest way to achieve this is to Preview your notebook in HTML (by clicking Preview) → Open in Browser (Chrome) → Right click on the report in Chrome → Click Print and Select the Destination Option to Save as PDF.
+
+
+You must also publish your report to RPubs (see [here](https://astral-theory-157510.appspot.com/secured/RBootcamp_Course_04.html#creating_an_r_markdown_document_in_r_studio)) and and submit this RPubs link to the [google form given here](https://docs.google.com/forms/d/e/1FAIpQLScp7o65p0ffYILhyQF98rDr66ODkKEq0McHCU0pAq1wV1nrxg/viewform?usp=sf_link). This online version of the report will be used for marking. Failure to submit your link will delay your feedback and risk late penalties.
+
+
+**Feel free to DELETE the instructional text provided in the template.** If you have any questions regarding the assignment instructions and the R template, please post it on [Slack](https://math2349-1850.slack.com) under the `#assignment3` channel. 
+
+
+## Required packages 
+
+
+```{r echo=TRUE}
+library(readr)
+#library(xlsx)
+library(readxl)
+#library(foreign)
+#library(gdata)
+#library(rvest)
+library(dplyr)
+library(tidyr)
+#library(deductive)
+#library(validate)
+#library(Hmisc)
+#library(forecast)
+#library(stringr)
+#library(lubridate)
+#library(outliers)
+#library(MVN)
+#library(infotheo)
+#library(MASS)
+#library(caret)
+#library(ggplot2)
+library(knitr)
+library(mlr)
+```
+
+
+## Executive Summary 
+
+
+In your own words, provide a brief summary of the preprocessing. Explain the steps that you have taken to preprocess your data. Write this section last after you have performed all data preprocessing. (Word count Max: 300 words)
+
+
+## Data 
+
+####A clear description of data sets, their sources, and variable descriptions should be provided. In this section, you must also provide the R codes with outputs (head of data sets) that you used to import/read/scrape the data set. You need to fulfil the minimum requirement #1 and merge at least two data sets to create the one you are going to work on. In addition to the R codes and outputs, you need to explain the steps that you have taken.
+
+We have used three different datasets.  
+
+####Data set 1: Education Levels
+
+The first data set that we used comes from the 2016 Australian Census made available by the Australian Bureau of Statistics (ABS). We used a public TableBuilder account to extract education level for each SA1 within Victoria. [Click here for information on TableBuilder](https://auth.censusdata.abs.gov.au/webapi/jsf/login.xhtml). SA1s are the smallest geographic unit that the majority of census data is available at.   They generally have a population of between 200 and 800 people. [Click here for more information](http://www.abs.gov.au/ausstats/abs@.nsf/Lookup/by%20Subject/1270.0.55.001~July%202016~Main%20Features~Statistical%20Area%20Level%201%20(SA1)~10013).  
+
+The columns in this data set are:
+
+* SA1 7 digit code
+* Postgraduate Degree Level
+    + Doctoral Degree Level
+    + Masters Degree Level
+* Graduate Diploma and Graduate Certificate Level
+* Bachelor Degree Level
+* Advanced Diploma and Diploma Level
+* Certificate III & IV Level
+* Secondary Education Years 10 and above
+* Certificate I &II Level
+* Secondary Education Years 9 and below
+* Supplementary Codes
+* Not stated
+* Not applicable
+* Total
+
+The different education levels are coded as per the Australian Classification of Education (ASCED) 2001. For more information click here.
+
+####Data set 2: Geographic Look Up 
+The second data set that we used is a geographic lookup linking SA1s to local government areas (LGAs) and the Greater Capital City Statistical Area (GCCSA) of Greater Melbourne. We compiled this lookup using geographic files for SA1s and LGAs from the ABS and did a spatial join (within QGIS). Click here for more information about QGIS.
+
+The columns in this data set are:
+
+* SA1_7DIG16
+    + 7 digit unique identifier for SA1
+    + Should be numeric
+* LGA_NAME17
+    + Local council name
+* MetroMelbourne
+    + Indicator of whether the SA1 is within metropolitan Melbourne
+
+####Data set 3: Council Profiles 
+The third data set that we used is developed by the Department of Health and Human Services. They produce profiles for every LGA within Victoria annually. The data that we used is from the 2015 profile (the latest available). We downloaded the data from the following source. This data set contains many different variables. We have chosen to import only a subset of the variables.
+
+This includes:
+
+LGA Name
+Travel time to Melbourne
+Total fertility rate
+Top 5 overseas countries of birth - country 1
+Top 5 ancestries - ancestry 1
+People who believe multiculturalism makes life better
+People reporting high/very psychological distress
+People who live near public transport
+Primary Health Network (PHN)
+Median household income
+```{r echo=TRUE, message=FALSE}
+education <- read_excel("allVic_education.xls", skip = 8, col_names = TRUE)
+head(education)
+
+geo_lookup <- read_csv("SA1_LGA_LookUp.csv")
+head(geo_lookup)
+
+LGA_health <- read_excel("LGA_Profile_2015.xlsx", col_names = TRUE, sheet = "LGAs")
+head(LGA_health)
+```
+
+## Understand 
+
+Summarise the types of variables and data structures, check the attributes in the data. In addition to the R codes and outputs, explain briefly the steps that you have taken. In this section, show that you have fulfilled minimum requirements 2-4.
+
+
+
+```{r echo=TRUE}
+
+#Education Data
+
+head(education) #First column and first rows contain no data and need to be trimmed.
+tail(education) #Extra rows at bottom of the data frame with no data, need to be trimmed.
+dim(education) #14 columns and 14,081 rows
+str(education) #One logical class column with no data. One character column with no header (X__1), will need to be renamed to SA1 and set to numeric so this                    dataset can be joined to others. The other 12 columns are numeric, containing counts of people with varying levels of educational                               qualifications in each statistical area.
+names(education) #X__1 will need to be changed to SA1. The other headers are varying levels of education qualifications, making this data a good candidate for                  gathering into a single column as they all pertain to the same type of information.
+class(education) #Class of object is a data frame as expected.
+glimpse(education)
+
+#Geographical Data
+
+head(geo_lookup) #No extra columns or rows to trim.
+tail(geo_lookup) #No extra columns or rows to trim. A few missing values are visible.
+dim(geo_lookup) #3 columns and 14,382 rows - more rows than the education data. Will consider this when choosing the type of join to use. 
+str(geo_lookup) #First column is SA1 values which are integers. Second column is LGA names which are characters. The third column has Metropolitan Melbourne Areas which are also characters. 
+names(geo_lookup) #Names can be more neatly given for the SA1 and LGA variables.
+class(geo_lookup) #Class is data frame, as expected.
+glimpse(geo_lookup)
+
+#Local Government Area Health Data - Structure, names and glimpse output supressed for brevity. 
+
+head(LGA_health) #No extra columns or rows to trim.
+tail(LGA_health) #Note that the last column is for all of Victoria.
+dim(LGA_health) #8 rows and 404 columns. Consider selecting only a few of these variables to work with. 
+#str(LGA_health) # Most variables are character, even ones that should be numeric, but need to decide which variables to work with first. LGA code is numeric but                 we will be matching the LGA names when joining to the other data set. 
+#names(LGA_health) #Variables that will be used are: LGA Name, Travel time to Melbourne, Total fertility rate, Top 5 overseas countries of birth - country 1, Top                  5 ancestries - ancestry 1, People who believe multiculturalism makes life better, People reporting high/very high psychological distress,                      People who live near public transport, Primary Health Network (PHN), Median household income
+class(LGA_health) #Class is data frame, as expected.
+#glimpse(LGA_health)
+```
+
+
+##	Tidy & Manipulate Data I 
+
+Check if the data conforms the tidy data principles. If your data is not in a tidy format, reshape your data into a tidy format (minimum requirement #5). In addition to the R codes and outputs, explain everything that you do in this step.
+
+
+```{r echo=TRUE}
+
+#Education Data
+education <- education[-1,-1] #Removing first row and column
+colnames(education)[1] <- "SA1" #The first column has no header. Setting column header to SA1. 
+totalrow <- which(education$SA1 == 'Total') #Add a totals row at the bottom of the data frame. 
+education <- education[1:totalrow - 1,] #Removing empty rows at end of data frame.
+
+
+edu_tidy <- gather(education, "Ed_level", "People", 2:length(education)) #Gathering column variables into a single row
+
+#Set education level to an ordered factor
+edu_tidy <- edu_tidy %>% mutate(Ed_level = factor(Ed_level, levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                                                       "Bachelor Degree Level", "Advanced Diploma and Diploma Level", "Certificate III & IV Level",                                          "Secondary Education - Years 10 and above", "Certificate I & II Level", "Secondary Education - Years 9 and below",
+                                                                       "Supplementary Codes", "Not stated", "Not applicable", "Total"),
+                                                  labels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                                             "Bachelor Degree Level", "Advanced Diploma and Diploma Level", "Certificate III & IV Level",
+                                                             "Secondary Education - Years 10 and above", "Certificate I & II Level", "Secondary Education - Years 9 and below",
+                                                             "Supplementary Codes", "Not stated", "Not applicable", "Total"),
+                                                  ordered = TRUE))
+
+edu_tidy <- transform(edu_tidy, SA1 = as.numeric(SA1)) #Setting the variable SA1 to numeric so it can be joined with other datasets. 
+
+#Local Government Area Lookup Data - provides a concordance between LGA and SA1 geographic areas
+#Left Join Education Data to geographical area lookup to match observations to their LGA.
+
+edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17", "MetroMelbourne")], by = c("SA1" = "SA1_7DIG16"))
+
+names(edu_tidy_join)[4] <- "LGA" #Change name from LGA_NAME17 to LGA for neatness. 
+
+head(edu_tidy_join)
+dim(edu_tidy_join)
+str(edu_tidy_join)
+glimpse(edu_tidy_join)
+
+summary(edu_tidy_join)
+
+```
+
+##	Tidy & Manipulate Data II 
+
+Create/mutate at least one variable from the existing variables (minimum requirement #6). In addition to the R codes and outputs, explain everything that you do in this step..
+
+```{r echo=TRUE}
+
+#Grouping by LGA
+edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(People = sum(People))
+head(edu_by_LGA)
+glimpse(edu_by_LGA)
+
+#LGA Health Data 
+#Define which subset of columns to take
+Subset_Columns <- c("LGA Name", "Travel time to Melbourne", "Total fertility rate", "Top 5 overseas countries of birth - country 1",
+                    "Top 5 ancestries - ancestry 1", "People who believe multiculturalism makes life better", "People reporting high/very high psychological distress", "People who live near public transport", "Primary Health Network (PHN)", "Median household income")
+
+LGA_health_ss <- LGA_health[Subset_Columns] #Apply the subset filter to the data frame
+
+summary(LGA_health_ss)
+str(LGA_health_ss)
+glimpse(LGA_health_ss)
+
+
+```
+
+
+##	Scan I 
+
+Scan the data for missing values, inconsistencies and obvious errors. In this step, you should fulfil the minimum requirement #7. In addition to the R codes and outputs, explain how you dealt with these values.
+
+```{r echo=TRUE}
+#Check the Education by LGA data frame for missing values using which(is.na()). 
+
+dim(edu_by_LGA) #There are 984 observations across the 3 variables. 
+
+which(is.na(edu_by_LGA)) #There are a number of missng values at the bottom of the data set. 
+
+colSums(is.na(edu_by_LGA)) #The missing values are in the LGA column, meaning there are some observations of education level that do not have a corresponding LGA available. 
+
+tail(edu_by_LGA)
+
+na_perc <- 12/984*100
+na_perc #Given only 1.2% of the data for LGAs is missing, this is tolerable. Since this is a character variable, we cannot impute but we could remove. 
+
+#Remove NAs
+edu_by_LGA_complete <- edu_by_LGA[complete.cases(edu_by_LGA), ]
+
+which(is.na(edu_by_LGA_complete)) #Now all missing values have been excluded. 
+
+#Check the Health by LGA data frame for missing values using which(is.na()). 
+
+dim(LGA_health_ss)
+
+which(is.na(LGA_health_ss ))
+
+tail(LGA_health_ss) #This makes sense that there are some missing values for Victoria as this is an aggregate, not a LGA in itself. 
+
+```
+
+
+##	Scan II
+
+Scan the numeric data for outliers. In this step, you should fulfil the minimum requirement #8. In addition to the R codes and outputs, explain how you dealt with these values.
+
+```{r echo=TRUE}
+
+# Post grad and Under Grad count
+edu_uni <- edu_tidy_join %>% filter(Ed_level <= 'Bachelor Degree Level')
+summary(edu_uni)
+glimpse(edu_uni)
+
+# Refactor levels of education
+edu_uni$Ed_level <- factor(edu_uni$Ed_level,
+                           labels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                      "Bachelor Degree Level"),
+                           levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                      "Bachelor Degree Level"))
+boxplot(People~Ed_level, data = edu_uni) 
+
+
+#let's mutate post and grad into one (total counts)
+edu_uni_tot <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
+                                     UnderGrad = education$`Bachelor Degree Level`) %>% 
+  select(SA1, Post, UnderGrad)
+head(edu_uni_tot)
+edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
+edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
+head(edu_uni_tot2)
+glimpse(edu_uni_tot2)
+
+# spread then mutate, will be easier
+box_post_tot <- boxplot(edu_uni_tot2[,2], main  = 'Post Grad Students per Region')
+length(box_post_tot$out) # 532 outliers for post grad
+box_under_tot <- boxplot(edu_uni_tot2[,3], main = 'UnderGrad Students per Region')
+length(box_under_tot$out) # 454 outliers for under grad
+
+#let's mutate post and grad into one (but as a proportion of the total)
+edu_uni_prop <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`)/education$Total,
+                                      UnderGrad = education$`Bachelor Degree Level`/education$Total) %>% 
+  select(SA1, Post, UnderGrad)
+head(edu_uni_prop)
+glimpse(edu_uni_prop)
+edu_uni_prop$SA1 <- as.numeric(edu_uni_prop$SA1)
+edu_uni_prop2 <- edu_uni_prop %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
+# spread then mutate, will be easier
+box_post_prop <- boxplot(edu_uni_prop2[,2], main = 'Proportion of Post Grad Students per Region')
+length(box_post_prop$out) # 203 outliers, significant drop in outliers when you take into account the proportion
+box_under_prop <- boxplot(edu_uni_prop2[,3], main = 'Proportion of Under Grad Students per Region')
+length(box_under_prop$out) # 122 outliers
+
+boxplot(edu_uni_tot2[,2:3])
+boxplot(edu_uni_prop2[,2:3]) # both visuals
+# finding proportions drastically reduces the count of outliers
+
+### Now what to do with outliers?
+
+####################################
+#LGA based outlier work
+
+# Post grad and Under Grad count
+edu_uni_lga <- edu_by_LGA %>% filter(Ed_level <= 'Bachelor Degree Level')
+summary(edu_uni_lga)
+glimpse(edu_uni_lga)
+
+# Refactor levels of education
+edu_uni_lga$Ed_level <- factor(edu_uni_lga$Ed_level,
+                               labels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                          "Bachelor Degree Level"),
+                               levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                          "Bachelor Degree Level"))
+boxplot(People~Ed_level, data = edu_uni_lga) 
+
+#let's mutate post and grad into one (total counts)
+glimpse(education)
+edu_uni_tot_lga <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
+                                         UnderGrad = education$`Bachelor Degree Level`) %>% select(LGA, Post, UnderGrad)
+
+head(edu_uni_tot)
+edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
+edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
+head(edu_uni_tot2)
+glimpse(edu_uni_tot2)
+```
+
+
+
+##	Transform 
+
+Apply an appropriate transformation for at least one of the variables. In addition to the R codes and outputs, explain everything that you do in this step. In this step, you should fulfil the minimum requirement #9.
+
+```{r echo=TRUE}
+
+#Filter the data to only include counts of people who completed postgraduate degree level education.
+
+edu_post <- edu_tidy_join %>%  filter(Ed_level == 'Postgraduate Degree Level')
+
+hist(edu_post$People) #Plotting a frequency histogram, the data is heavily right skewed. 
+
+edu_post_log <- log(edu_post$People) #Calculate the natural logarithm of the counts of people
+
+hist(edu_post_log) #The log transformation results a clear normal distribution
+
+#Filter the data to only include counts of people who completed bachelor degree level education.
+
+edu_under <- edu_tidy_join %>%  filter(Ed_level == 'Bachelor Degree Level')
+
+hist(edu_under$People) #Plotting a frequency histogram, the data is also heavily right skewed. 
+
+edu_under_log <- log(edu_under$People) #Applied the same treatment as above, taking the natural logarithm of the count. 
+
+hist(edu_under_log) #Again, the data is now normally distributed as a result of the log transformation. 
+
+
+```
+
+
+##  Additional Step: Machine Learning
+```{r echo=TRUE}
+# If we know how many undergrad students we have, can you predict how many students will undertake post grad courses?
+# Select data for ml
+data <- edu_uni_tot2[2:3]
+
+# Make task
+task <- makeRegrTask(data = data, target = 'Post')
+
+# Make learner
+learner <- makeLearner('regr.glm')
+
+# Fit model
+n <- nrow(data)
+training.set <- sample(n, size = 2*n/3)
+test.set <- setdiff(1:n, training.set)
+
+model <- mlr::train(learner, task, subset = training.set)
+
+# Predict
+pred <- predict(model, task = task, subset = test.set)
+
+# Evaluate
+performance(pred, measures = list(mse, mae))
+
+x <- pred$data$truth
+y <- pred$data$response
+plot(x, y, xlab = 'Actual Value', ylab = 'Predicted Value', col = 'blue', main = 'Regression Machine Learning')
+abline(1:500, 1:500, lwd = 2, col = 'red')
+```
+
+NOTE: Follow the order outlined above in the report. Make sure your code is visible (within the margin of the page). Do not use View() to show your data instead give headers (using head() )
+
+
+Any further or optional pre-processing tasks can be added to the template using an additional section in the R Markdown file. Please also provide the R codes, outputs and brief explanations on why and how you applied these tasks on the data.
+
+<br>
+<br>
