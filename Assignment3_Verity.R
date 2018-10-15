@@ -52,9 +52,16 @@ geo_lookup <- read_csv("SA1_LGA_LookUp.csv")
 
 #Adding LGA column to education data
 edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17", "MetroMelbourne")], by= c("SA1" = "SA1_7DIG16"))
+names(edu_tidy_join)[4] <- "LGA"
 View(edu_tidy_join)
 summary(edu_tidy_join)
 str(edu_tidy_join)
+glimpse(edu_tidy_join)
+
+#Grouping by LGA
+edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(People = sum(People))
+head(edu_by_LGA)
+glimpse(edu_by_LGA)
 
 #Bringing in health-based data
 LGA_health <- read_excel("LGA_Profile_2015.xlsx", col_names = TRUE, sheet = "LGAs")
@@ -62,11 +69,12 @@ View(LGA_health)
 
 Subset_Columns <- c("LGA Name", "Travel time to Melbourne", "Total fertility rate", "Top 5 overseas countries of birth - country 1",
                     "Top 5 ancestries - ancestry 1", "People who believe multiculturalism makes life better", "People reporting high/very high psychological distress",
-                    "People who live near public transport", "Primary Health Network (PHN)")
+                    "People who live near public transport", "Primary Health Network (PHN)", "Median household income")
 LGA_health_ss <- LGA_health[Subset_Columns]
 View(LGA_health_ss)
 summary(LGA_health_ss)
 str(LGA_health_ss)
+glimpse(LGA_health_ss)
 
 #########################
 # Outliers Detection
@@ -75,6 +83,7 @@ str(LGA_health_ss)
 # Post grad and Under Grad count
 edu_uni <- edu_tidy_join %>% filter(Ed_level <= 'Bachelor Degree Level')
 summary(edu_uni)
+glimpse(edu_uni)
 
 # Refactor levels of education
 edu_uni$Ed_level <- factor(edu_uni$Ed_level,
@@ -93,6 +102,7 @@ head(edu_uni_tot)
 edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
 edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
 head(edu_uni_tot2)
+glimpse(edu_uni_tot2)
 
 # spread then mutate, will be easier
 box_post_tot <- boxplot(edu_uni_tot2[,2], main  = 'Post Grad Students per Region')
@@ -105,6 +115,7 @@ edu_uni_prop <- education %>%  mutate(Post = (education$`Postgraduate Degree Lev
                                       UnderGrad = education$`Bachelor Degree Level`/education$Total) %>% 
                                       select(SA1, Post, UnderGrad)
 head(edu_uni_prop)
+glimpse(edu_uni_prop)
 edu_uni_prop$SA1 <- as.numeric(edu_uni_prop$SA1)
 edu_uni_prop2 <- edu_uni_prop %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
 # spread then mutate, will be easier
@@ -229,5 +240,30 @@ plot(x, y, xlab = 'Actual Value', ylab = 'Predicted Value', col = 'blue', main =
 abline(1:500, 1:500, lwd = 2, col = 'red')
 
 
+####################################
+#LGA based outlier work
+
+# Post grad and Under Grad count
+edu_uni_lga <- edu_by_LGA %>% filter(Ed_level <= 'Bachelor Degree Level')
+summary(edu_uni_lga)
+glimpse(edu_uni_lga)
+
+# Refactor levels of education
+edu_uni_lga$Ed_level <- factor(edu_uni_lga$Ed_level,
+                           labels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                      "Bachelor Degree Level"),
+                           levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
+                                      "Bachelor Degree Level"))
+boxplot(People~Ed_level, data = edu_uni_lga) 
+
+#let's mutate post and grad into one (total counts)
+edu_uni_tot_lga <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
+                                     UnderGrad = education$`Bachelor Degree Level`) %>% 
+  select(LGA_NAME17, Post, UnderGrad)
+head(edu_uni_tot)
+edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
+edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
+head(edu_uni_tot2)
+glimpse(edu_uni_tot2)
 
 
