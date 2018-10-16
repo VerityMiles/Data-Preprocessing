@@ -56,8 +56,6 @@ In your own words, provide a brief summary of the preprocessing. Explain the ste
 
 ## Data 
 
-####A clear description of data sets, their sources, and variable descriptions should be provided. In this section, you must also provide the R codes with outputs (head of data sets) that you used to import/read/scrape the data set. You need to fulfil the minimum requirement #1 and merge at least two data sets to create the one you are going to work on. In addition to the R codes and outputs, you need to explain the steps that you have taken.
-
 We have used three different datasets.  
 
 ####Data set 1: Education Levels
@@ -98,20 +96,21 @@ The columns in this data set are:
     + Indicator of whether the SA1 is within metropolitan Melbourne
 
 ####Data set 3: Council Profiles 
-The third data set that we used is developed by the Department of Health and Human Services. They produce profiles for every LGA within Victoria annually. The data that we used is from the 2015 profile (the latest available). We downloaded the data from the following source. This data set contains many different variables. We have chosen to import only a subset of the variables.
+The third data set that we used is developed by the Department of Health and Human Services. They produce profiles for every LGA within Victoria annually. The data that we used is from the 2015 profile (the latest available). We downloaded the data from the following source. This data set contains many different variables, including:
 
-This includes:
+* LGA Name
+* Travel time to Melbourne
+* Total fertility rate
+* Top 5 overseas countries of birth - country 1
+* Top 5 ancestries - ancestry 1
+* People who believe multiculturalism makes life better
+* People reporting high/very psychological distress
+* People who live near public transport
+* Primary Health Network (PHN)
+* Median household income
 
-LGA Name
-Travel time to Melbourne
-Total fertility rate
-Top 5 overseas countries of birth - country 1
-Top 5 ancestries - ancestry 1
-People who believe multiculturalism makes life better
-People reporting high/very psychological distress
-People who live near public transport
-Primary Health Network (PHN)
-Median household income
+As this data set contains a large number of variables, only some of the variables will be used in this assignment. 
+
 ```{r echo=TRUE, message=FALSE}
 education <- read_excel("allVic_education.xls", skip = 8, col_names = TRUE)
 head(education)
@@ -127,18 +126,73 @@ head(LGA_health)
 
 Summarise the types of variables and data structures, check the attributes in the data. In addition to the R codes and outputs, explain briefly the steps that you have taken. In this section, show that you have fulfilled minimum requirements 2-4.
 
+####Data set 1: Education Levels - Types of variables
 
+Character:
+* SA1 7 digit code
+
+This variable will need to be converted to a numeric data type so that the data set can be joined with the other data.
+
+Numeric:
+* Postgraduate Degree Level
+    + Doctoral Degree Level
+    + Masters Degree Level
+* Graduate Diploma and Graduate Certificate Level
+* Bachelor Degree Level
+* Advanced Diploma and Diploma Level
+* Certificate III & IV Level
+* Secondary Education Years 10 and above
+* Certificate I &II Level
+* Secondary Education Years 9 and below
+* Supplementary Codes
+* Not stated
+* Not applicable
+* Total
+
+The values in these columns are a numeric count of people in each statistical area that have achieved a certain level of education. The levels of education are suitable for creating an ordered factor variable as there is a clear, sensible ordering of each level of education. Before this can be done, the data must be gathered together in a single column. This will be done in the next step. 
+
+####Data set 2: Geographic Look Up - Types of variables 
+
+Integer:
+* SA1_7DIG16
+
+Character:
+* LGA_NAME17
+* MetroMelbourne
+
+The values in this column are categorical data so character is the correct data type. 
+
+####Data set 3: Council Profiles SUBSET
+
+Data has been subset to include only 10 of the 404 available attributes for to make the data set more manageable. This was used by creating a list of the 10 attributes of interest and applying this list to the Council Profiles data set in order to create a subset. 
+
+####Types of Variables
+
+Character:
+* LGA Name
+* Travel time to Melbourne
+* Total fertility rate
+* Top 5 overseas countries of birth - country 1
+* Top 5 ancestries - ancestry 1
+* People who believe multiculturalism makes life better
+* People reporting high/very psychological distress
+* People who live near public transport
+* Primary Health Network (PHN)
+* Median household income
+
+All data types are character. Most values are categorical except travel time, fertility rate and median household income. 
 
 ```{r echo=TRUE}
 
-#Education Data
+#Education Levels
 
 head(education) #First column and first rows contain no data and need to be trimmed.
 tail(education) #Extra rows at bottom of the data frame with no data, need to be trimmed.
 dim(education) #14 columns and 14,081 rows
-str(education) #One logical class column with no data. One character column with no header (X__1), will need to be renamed to SA1 and set to numeric so this                    dataset can be joined to others. The other 12 columns are numeric, containing counts of people with varying levels of educational                               qualifications in each statistical area.
-names(education) #X__1 will need to be changed to SA1. The other headers are varying levels of education qualifications, making this data a good candidate for                  gathering into a single column as they all pertain to the same type of information.
+str(education) #One logical class column with no data. One character column with no header (X__1), will need to be renamed to SA1 and set to numeric so this dataset can be joined to others. The other 12 columns are numeric, containing counts of people with varying levels of educational qualifications in each statistical area.
+names(education) #X__1 will need to be changed to SA1. The other headers are varying levels of education qualifications, making this data a good candidate for gathering into a single column as they all pertain to the same type of information.
 class(education) #Class of object is a data frame as expected.
+attributes(education)
 glimpse(education)
 
 #Geographical Data
@@ -149,23 +203,51 @@ dim(geo_lookup) #3 columns and 14,382 rows - more rows than the education data. 
 str(geo_lookup) #First column is SA1 values which are integers. Second column is LGA names which are characters. The third column has Metropolitan Melbourne Areas which are also characters. 
 names(geo_lookup) #Names can be more neatly given for the SA1 and LGA variables.
 class(geo_lookup) #Class is data frame, as expected.
+attributes(geo_lookup)
 glimpse(geo_lookup)
 
-#Local Government Area Health Data - Structure, names and glimpse output supressed for brevity. 
+#Local Government Area Health Data - Subset
 
-head(LGA_health) #No extra columns or rows to trim.
-tail(LGA_health) #Note that the last column is for all of Victoria.
-dim(LGA_health) #8 rows and 404 columns. Consider selecting only a few of these variables to work with. 
-#str(LGA_health) # Most variables are character, even ones that should be numeric, but need to decide which variables to work with first. LGA code is numeric but                 we will be matching the LGA names when joining to the other data set. 
-#names(LGA_health) #Variables that will be used are: LGA Name, Travel time to Melbourne, Total fertility rate, Top 5 overseas countries of birth - country 1, Top                  5 ancestries - ancestry 1, People who believe multiculturalism makes life better, People reporting high/very high psychological distress,                      People who live near public transport, Primary Health Network (PHN), Median household income
-class(LGA_health) #Class is data frame, as expected.
-#glimpse(LGA_health)
+#Define which subset of columns to take
+Subset_Columns <- c("LGA Name", "Travel time to Melbourne", "Total fertility rate", "Top 5 overseas countries of birth - country 1",
+                    "Top 5 ancestries - ancestry 1", "People who believe multiculturalism makes life better", "People reporting high/very high psychological distress", "People who live near public transport", "Primary Health Network (PHN)", "Median household income")
+
+LGA_health_ss <- LGA_health[Subset_Columns] #Apply the subset filter to the data frame
+
+head(LGA_health_ss) #No extra columns or rows to trim.
+tail(LGA_health_ss) #Note that the last column is for all of Victoria.
+dim(LGA_health_ss) #After subsetting, we have 80 rows and 10 columns.
+str(LGA_health_ss) #Variables are all character in type. 
+names(LGA_health_ss)
+glimpse(LGA_health_ss)
+class(LGA_health_ss) #Class is data frame, as expected.
+attributes(LGA_health_ss)
+summary(LGA_health_ss)
+
+
+
 ```
 
 
 ##	Tidy & Manipulate Data I 
 
 Check if the data conforms the tidy data principles. If your data is not in a tidy format, reshape your data into a tidy format (minimum requirement #5). In addition to the R codes and outputs, explain everything that you do in this step.
+
+Firstly, some trimming of extraneous data rows and columns was undertaken to clean the data set and make it more usable for analysis. Similarly, the column name for the education data was changed from the generic X__1 to SA1 to make it easier to understand. A totals row was also added to the data set so that proportions could be calculated for each level of education. 
+
+####Tidy Data Principles:
+
+1. Each variable must have its own column.
+2. Each observation must have its own row.
+3. Each value must have its own cell.
+
+The data sets do generally conform to the tidy data principles. However, it could be argued that the levels of education in the Education Levels data set qualify as a single variable, rather than a set of different variables. To address this, the gather function has been applied to all the education levels to bring them into a single column called Ed_level. Now the data set is comprised of three attributes, statistical area (SA1), level of education and a count of people in each SA1 that meet a particular level of education.
+
+As mentioned in the previous section, the education level variable is a good candidate for creating an ordered factor variable as there is a naturally ordering of education levels. Education levels were labelled and ordered. Note that some observations had "Not Stated" and "Not Applicable" for education level. These have been ordered last in the factor ordering. 
+
+Now that the Education Levels data is tidy, we have joined it with the Local Government Area lookup data. Now we are able to access how many people in each LGA achieved each particular level of education. In order to do this, SA1 has been converted to a numeric variable in the Education Level data so that it is compatible with the LGA Lookup dataset. A left join was chosen, prioritising the education data on the left hand side as we want to be able to see as many LGAs for each observation in the Education Levels as we can. 
+
+The LGA variable in the LGA Lookup data set is called "LGA_NAME17" which is the metadata label used by the source (ABS). The column name has been changed to LGA which is simpler for users to read. 
 
 
 ```{r echo=TRUE}
@@ -178,6 +260,8 @@ education <- education[1:totalrow - 1,] #Removing empty rows at end of data fram
 
 
 edu_tidy <- gather(education, "Ed_level", "People", 2:length(education)) #Gathering column variables into a single row
+
+head(edu_tidy)
 
 #Set education level to an ordered factor
 edu_tidy <- edu_tidy %>% mutate(Ed_level = factor(Ed_level, levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
@@ -217,17 +301,6 @@ Create/mutate at least one variable from the existing variables (minimum require
 edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(People = sum(People))
 head(edu_by_LGA)
 glimpse(edu_by_LGA)
-
-#LGA Health Data 
-#Define which subset of columns to take
-Subset_Columns <- c("LGA Name", "Travel time to Melbourne", "Total fertility rate", "Top 5 overseas countries of birth - country 1",
-                    "Top 5 ancestries - ancestry 1", "People who believe multiculturalism makes life better", "People reporting high/very high psychological distress", "People who live near public transport", "Primary Health Network (PHN)", "Median household income")
-
-LGA_health_ss <- LGA_health[Subset_Columns] #Apply the subset filter to the data frame
-
-summary(LGA_health_ss)
-str(LGA_health_ss)
-glimpse(LGA_health_ss)
 
 
 ```
