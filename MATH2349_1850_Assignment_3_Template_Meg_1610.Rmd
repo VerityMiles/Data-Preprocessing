@@ -73,10 +73,10 @@ The columns in this data set are:
 
 ```{r echo=TRUE, warning=FALSE}
 education <- read_excel("allVic_education.xls", skip = 8, col_names = TRUE)
-head(education)
+kable(head(education))
 
 geo_lookup <- read_csv("SA1_LGA_LookUp.csv")
-head(geo_lookup)
+kable(head(geo_lookup))
 
 ```
 
@@ -87,12 +87,7 @@ After importing the education data set, an error occurred. At the bottom of the 
 
 Summarise the types of variables and data structures, check the attributes in the data. In addition to the R codes and outputs, explain briefly the steps that you have taken. In this section, show that you have fulfilled minimum requirements 2-4.
 
-####Data set 1: Education Levels
-
-The first data set that we used comes from the 2016 Australian Census made available by the Australian Bureau of Statistics (ABS). We used a public TableBuilder account to extract education level for each SA1 within Victoria. [Click here for information on TableBuilder](https://auth.censusdata.abs.gov.au/webapi/jsf/login.xhtml). SA1s are the smallest geographic unit that the majority of census data is available at.   They generally have a population of between 200 and 800 people. [Click here for more information](http://www.abs.gov.au/ausstats/abs@.nsf/Lookup/by%20Subject/1270.0.55.001~July%202016~Main%20Features~Statistical%20Area%20Level%201%20(SA1)~10013).  
-
-
-##### Types of variables
+####Data set 1: Education Levels - Types of variables
 
 Character:
 <ul>
@@ -132,12 +127,14 @@ Character:
 
 The values in this column are categorical data so character is the correct data type. 
 
+Please note that there is one LGA name that is 'Unincorporated Vic'. This is a legitimate value and should not be treated as a missing value.  
+
 ```{r echo=TRUE}
 
 #Education Levels
 
-head(education) #First column and first rows contain no data and need to be trimmed.
-tail(education) #Extra rows at bottom of the data frame with no data, need to be trimmed.
+kable(head(education)) #First column and first rows contain no data and need to be trimmed.
+kable(tail(education)) #Extra rows at bottom of the data frame with no data, need to be trimmed.
 dim(education) #14 columns and 14,081 rows
 str(education) #One logical class column with no data. One character column with no header (X__1), will need to be renamed to SA1 and set to numeric so this dataset can be joined to others. The other 12 columns are numeric, containing counts of people with varying levels of educational qualifications in each statistical area.
 names(education) #X__1 will need to be changed to SA1. The other headers are varying levels of education qualifications, making this data a good candidate for gathering into a single column as they all pertain to the same type of information.
@@ -145,8 +142,8 @@ class(education) #Class of object is a data frame as expected.
 
 #Geographical Data
 
-head(geo_lookup) #No extra columns or rows to trim.
-tail(geo_lookup) #No extra columns or rows to trim. A few missing values are visible.
+kable(head(geo_lookup)) #No extra columns or rows to trim.
+kable(tail(geo_lookup)) #No extra columns or rows to trim. A few missing values are visible.
 dim(geo_lookup) #3 columns and 14,382 rows - more rows than the education data. Will consider this when choosing the type of join to use. 
 str(geo_lookup) #First column is SA1 values which are integers. Second column is LGA names which are characters. The third column has Metropolitan Melbourne Areas which are also characters. 
 names(geo_lookup) #Names can be more neatly given for the SA1 and LGA variables.
@@ -187,7 +184,7 @@ education <- education[1:totalrow - 1,] #Removing empty rows at end of data fram
 
 edu_tidy <- gather(education, "Ed_level", "People", 2:length(education)) #Gathering column variables into a single row
 
-head(edu_tidy)
+kable(head(edu_tidy))
 
 #Set education level to an ordered factor
 edu_tidy <- edu_tidy %>% mutate(Ed_level = factor(Ed_level, levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
@@ -208,11 +205,10 @@ edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17"
 
 names(edu_tidy_join)[4] <- "LGA" #Change name from LGA_NAME17 to LGA for neatness. 
 
-head(edu_tidy_join)
+kable(head(edu_tidy_join))
 dim(edu_tidy_join)
 str(edu_tidy_join)
-glimpse(edu_tidy_join)
-tail(edu_tidy_join)
+kable(tail(edu_tidy_join))
 
 summary(edu_tidy_join)
 
@@ -232,7 +228,7 @@ Now that we have Education Levels by LGA from joining the two data sets, we have
 #Grouping by LGA
 edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(PeopleSum = sum(People))
 
-head(edu_by_LGA)
+kable(head(edu_by_LGA))
 glimpse(edu_by_LGA)
 
 
@@ -254,7 +250,7 @@ which(is.na(edu_by_LGA)) #There are a number of missng values at the bottom of t
 
 colSums(is.na(edu_by_LGA)) #The missing values are in the LGA column, meaning there are some observations of education level that do not have a corresponding LGA available. 
 
-tail(edu_by_LGA)
+kable(tail(edu_by_LGA))
 
 edu_by_LGA_NAs <- edu_tidy_join %>% group_by(Ed_level) %>% summarise(PeopleSum = sum(People)) #use to demonstrate it's okay to remove NAs
 
@@ -304,7 +300,6 @@ Finally, we looked at the combined number of people with either a postgraduate d
 # Post grad and Under Grad count
 edu_uni <- edu_tidy_join %>% filter(Ed_level <= 'Bachelor Degree Level')
 summary(edu_uni)
-glimpse(edu_uni)
 
 # Refactor levels of education
 edu_uni$Ed_level <- factor(edu_uni$Ed_level,
@@ -312,30 +307,37 @@ edu_uni$Ed_level <- factor(edu_uni$Ed_level,
                                       "Bachelor Degree Level"),
                            levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
                                       "Bachelor Degree Level"))
-boxplot(edu_uni$People ~ edu_uni$Ed_level)
-
+boxplot(edu_uni$People ~ edu_uni$Ed_level, cex.axis = 0.55,
+        main = "Distribution of Population within SA1 by Education Level",
+        ylab = "Population", xlab = "Education Level")
 
 #let's mutate post and grad into one (total counts)
 edu_uni_tot <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
                                      UnderGrad = education$`Bachelor Degree Level`) %>% 
                               select(SA1, Post, UnderGrad)
-head(edu_uni_tot)
+kable(head(edu_uni_tot))
 edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
 edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
-head(edu_uni_tot2)
+kable(head(edu_uni_tot2))
 glimpse(edu_uni_tot2)
 
 # spread then mutate, will be easier
-box_post_tot <- boxplot(edu_uni_tot2[,2], main  = 'Post Grad Students per Region')
-length(box_post_tot$out) # 532 outliers for post grad
-box_under_tot <- boxplot(edu_uni_tot2[,3], main = 'UnderGrad Students per Region')
-length(box_under_tot$out) # 454 outliers for under grad
+box_tot <- boxplot(edu_uni_tot2[,2:3], main  = 'Distribution of Population Qualifications',
+                        xlab = "Highest Educational Qualification", cex.axis = 0.55,
+                        names = c("Postgraduate", "Undergraduate"),
+                        ylab = "Population")
+length(box_tot$out) # 986 outliers for both postgraduate and undergraduate qualifications
+
+```
+
+```{r}
+
 
 #let's mutate post and grad into one (but as a proportion of the total)
 edu_uni_prop <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`)/education$Total,
                                       UnderGrad = education$`Bachelor Degree Level`/education$Total) %>% 
                                 select(SA1, Post, UnderGrad)
-head(edu_uni_prop)
+kable(head(edu_uni_prop))
 glimpse(edu_uni_prop)
 edu_uni_prop$SA1 <- as.numeric(edu_uni_prop$SA1)
 edu_uni_prop2 <- edu_uni_prop %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
@@ -403,8 +405,6 @@ summary(under_cap)
 
 boxplot(post_cap, under_cap)
 
-
-#I am great
 ```
 
 
