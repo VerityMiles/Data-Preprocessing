@@ -1,48 +1,21 @@
 ---
 title: "MATH2349 Semester 2, 2018"
 author: "Verity Miles(s3644459), Sam Holt (s3381728), Meg Cuddihy (s3608125)"
-subtitle: Assignment 3
-date: "15 October 2018"
+date: "17 October 2018"
 output:
   html_notebook: default
+  html_document:
+    df_print: paged
+subtitle: Assignment 3
 ---
-
-You must use the headings and chunks provided in the template, you may add additional sections and R chunks if you require. In the report, all R chunks and outputs needs to be visible. Failure to do so will result in a loss of marks. 
-
-
-This report must be uploaded to Turnitin as a PDF with your code chunks and outputs showing. The easiest way to achieve this is to Preview your notebook in HTML (by clicking Preview) → Open in Browser (Chrome) → Right click on the report in Chrome → Click Print and Select the Destination Option to Save as PDF.
-
-
-You must also publish your report to RPubs (see [here](https://astral-theory-157510.appspot.com/secured/RBootcamp_Course_04.html#creating_an_r_markdown_document_in_r_studio)) and and submit this RPubs link to the [google form given here](https://docs.google.com/forms/d/e/1FAIpQLScp7o65p0ffYILhyQF98rDr66ODkKEq0McHCU0pAq1wV1nrxg/viewform?usp=sf_link). This online version of the report will be used for marking. Failure to submit your link will delay your feedback and risk late penalties.
-
-
-**Feel free to DELETE the instructional text provided in the template.** If you have any questions regarding the assignment instructions and the R template, please post it on [Slack](https://math2349-1850.slack.com) under the `#assignment3` channel. 
-
 
 ## Required packages 
 
-
-```{r echo=TRUE}
+```{r echo=TRUE, warning=FALSE}
 library(readr)
-#library(xlsx)
 library(readxl)
-#library(foreign)
-#library(gdata)
-#library(rvest)
 library(dplyr)
 library(tidyr)
-#library(deductive)
-#library(validate)
-#library(Hmisc)
-#library(forecast)
-#library(stringr)
-#library(lubridate)
-#library(outliers)
-#library(MVN)
-#library(infotheo)
-#library(MASS)
-#library(caret)
-#library(ggplot2)
 library(knitr)
 library(mlr)
 ```
@@ -56,131 +29,108 @@ In your own words, provide a brief summary of the preprocessing. Explain the ste
 
 ## Data 
 
-We have used three different datasets.  
+We have used two different datasets.  
 
 ####Data set 1: Education Levels
 
 The first data set that we used comes from the 2016 Australian Census made available by the Australian Bureau of Statistics (ABS). We used a public TableBuilder account to extract education level for each SA1 within Victoria. [Click here for information on TableBuilder](https://auth.censusdata.abs.gov.au/webapi/jsf/login.xhtml). SA1s are the smallest geographic unit that the majority of census data is available at.   They generally have a population of between 200 and 800 people. [Click here for more information](http://www.abs.gov.au/ausstats/abs@.nsf/Lookup/by%20Subject/1270.0.55.001~July%202016~Main%20Features~Statistical%20Area%20Level%201%20(SA1)~10013).  
 
-The columns in this data set are:
+The columns in this data set are:  
+<ul>
+<li> SA1 7 digit code  
+<li> Postgraduate Degree Level  
+<ul><li> Doctoral Degree Level </ul> 
+<ul><li> Masters Degree Level  </ul>
+<li> Graduate Diploma and Graduate Certificate Level  
+<li> Bachelor Degree Level  
+<li> Advanced Diploma and Diploma Level  
+<li> Certificate III & IV Level  
+<li> Secondary Education Years 10 and above  
+<li> Certificate I &II Level  
+<li> Secondary Education Years 9 and below  
+<li> Supplementary Codes  
+<li> Not stated  
+<li> Not applicable  
+<li> Total  </ul>
 
-* SA1 7 digit code
-* Postgraduate Degree Level
-    + Doctoral Degree Level
-    + Masters Degree Level
-* Graduate Diploma and Graduate Certificate Level
-* Bachelor Degree Level
-* Advanced Diploma and Diploma Level
-* Certificate III & IV Level
-* Secondary Education Years 10 and above
-* Certificate I &II Level
-* Secondary Education Years 9 and below
-* Supplementary Codes
-* Not stated
-* Not applicable
-* Total
+The different education levels are coded as per the Australian Classification of Education (ASCED) 2001. For more information click [here](http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1272.0Main%20Features12001?opendocument&tabname=Summary&prodno=1272.0&issue=2001&num=&view=).  
 
-The different education levels are coded as per the Australian Classification of Education (ASCED) 2001. For more information click here.
+When using data from the Australian Census it is important to remember that all data is self-reported. This means that care needs to be taken when making conclusions from this data source.  
 
 ####Data set 2: Geographic Look Up 
-The second data set that we used is a geographic lookup linking SA1s to local government areas (LGAs) and the Greater Capital City Statistical Area (GCCSA) of Greater Melbourne. We compiled this lookup using geographic files for SA1s and LGAs from the ABS and did a spatial join (within QGIS). Click here for more information about QGIS.
+The second data set that we used is a geographic lookup linking SA1s to local government areas (LGAs) and the Greater Capital City Statistical Area (GCCSA) of Greater Melbourne. We compiled this lookup using geographic files for SA1s and LGAs from the ABS and did a spatial join (within QGIS).  [Click here for more information about QGIS](https://www.qgis.org/en/site/).  
 
-The columns in this data set are:
+The columns in this data set are:  
+<ul>
+<li> SA1_7DIG16  
+<ul><li> 7 digit unique identifier for SA1</ul>
+<ul><li> Should be numeric</ul>
+<li> LGA_NAME17  
+<ul><li> Local council name</ul>
+<li> MetroMelbourne  
+<ul><li> Indicator of whether the SA1 is within metropolitan Melbourne  </ul>
 
-* SA1_7DIG16
-    + 7 digit unique identifier for SA1
-    + Should be numeric
-* LGA_NAME17
-    + Local council name
-* MetroMelbourne
-    + Indicator of whether the SA1 is within metropolitan Melbourne
 
-####Data set 3: Council Profiles 
-The third data set that we used is developed by the Department of Health and Human Services. They produce profiles for every LGA within Victoria annually. The data that we used is from the 2015 profile (the latest available). We downloaded the data from the following source. This data set contains many different variables, including:
-
-* LGA Name
-* Travel time to Melbourne
-* Total fertility rate
-* Top 5 overseas countries of birth - country 1
-* Top 5 ancestries - ancestry 1
-* People who believe multiculturalism makes life better
-* People reporting high/very psychological distress
-* People who live near public transport
-* Primary Health Network (PHN)
-* Median household income
-
-As this data set contains a large number of variables, only some of the variables will be used in this assignment. 
-
-```{r echo=TRUE, message=FALSE}
+```{r echo=TRUE, warning=FALSE}
 education <- read_excel("allVic_education.xls", skip = 8, col_names = TRUE)
 head(education)
 
 geo_lookup <- read_csv("SA1_LGA_LookUp.csv")
 head(geo_lookup)
 
-LGA_health <- read_excel("LGA_Profile_2015.xlsx", col_names = TRUE, sheet = "LGAs")
-head(LGA_health)
 ```
+
+After importing the education data set, an error occurred. At the bottom of the dataset, there is a disclaimer with extra informtion. The error states that this information is not imported. This is not an issue as we didn't need that data.
+
 
 ## Understand 
 
 Summarise the types of variables and data structures, check the attributes in the data. In addition to the R codes and outputs, explain briefly the steps that you have taken. In this section, show that you have fulfilled minimum requirements 2-4.
 
-####Data set 1: Education Levels - Types of variables
+####Data set 1: Education Levels
+
+The first data set that we used comes from the 2016 Australian Census made available by the Australian Bureau of Statistics (ABS). We used a public TableBuilder account to extract education level for each SA1 within Victoria. [Click here for information on TableBuilder](https://auth.censusdata.abs.gov.au/webapi/jsf/login.xhtml). SA1s are the smallest geographic unit that the majority of census data is available at.   They generally have a population of between 200 and 800 people. [Click here for more information](http://www.abs.gov.au/ausstats/abs@.nsf/Lookup/by%20Subject/1270.0.55.001~July%202016~Main%20Features~Statistical%20Area%20Level%201%20(SA1)~10013).  
+
+
+##### Types of variables
 
 Character:
-* SA1 7 digit code
+<ul>
+<li> SA1 7 digit code  </ul>
 
-This variable will need to be converted to a numeric data type so that the data set can be joined with the other data.
+This variable will need to be converted to a numeric data type so that the data set can be joined with the other data. The SA1 7 digit code is a unique identifier and should not be summed or averaged.
 
 Numeric:
-* Postgraduate Degree Level
-    + Doctoral Degree Level
-    + Masters Degree Level
-* Graduate Diploma and Graduate Certificate Level
-* Bachelor Degree Level
-* Advanced Diploma and Diploma Level
-* Certificate III & IV Level
-* Secondary Education Years 10 and above
-* Certificate I &II Level
-* Secondary Education Years 9 and below
-* Supplementary Codes
-* Not stated
-* Not applicable
-* Total
+<ul>
+<li> Postgraduate Degree Level  
+<ul><li> Doctoral Degree Level </ul> 
+<ul><li> Masters Degree Level  </ul>
+<li> Graduate Diploma and Graduate Certificate Level  
+<li> Bachelor Degree Level  
+<li> Advanced Diploma and Diploma Level  
+<li> Certificate III & IV Level  
+<li> Secondary Education Years 10 and above  
+<li> Certificate I &II Level  
+<li> Secondary Education Years 9 and below  
+<li> Supplementary Codes  
+<li> Not stated  
+<li> Not applicable   
+<li> Total  </ul>
 
 The values in these columns are a numeric count of people in each statistical area that have achieved a certain level of education. The levels of education are suitable for creating an ordered factor variable as there is a clear, sensible ordering of each level of education. Before this can be done, the data must be gathered together in a single column. This will be done in the next step. 
 
 ####Data set 2: Geographic Look Up - Types of variables 
 
 Integer:
-* SA1_7DIG16
+<ul>
+<li> SA1_7DIG16  </ul>
 
 Character:
-* LGA_NAME17
-* MetroMelbourne
+<ul>
+<li> LGA_NAME17  
+<li> MetroMelbourne  </ul>
 
 The values in this column are categorical data so character is the correct data type. 
-
-####Data set 3: Council Profiles SUBSET
-
-Data has been subset to include only 10 of the 404 available attributes for to make the data set more manageable. This was used by creating a list of the 10 attributes of interest and applying this list to the Council Profiles data set in order to create a subset. 
-
-####Types of Variables
-
-Character:
-* LGA Name
-* Travel time to Melbourne
-* Total fertility rate
-* Top 5 overseas countries of birth - country 1
-* Top 5 ancestries - ancestry 1
-* People who believe multiculturalism makes life better
-* People reporting high/very psychological distress
-* People who live near public transport
-* Primary Health Network (PHN)
-* Median household income
-
-All data types are character. Most values are categorical except travel time, fertility rate and median household income. 
 
 ```{r echo=TRUE}
 
@@ -192,8 +142,6 @@ dim(education) #14 columns and 14,081 rows
 str(education) #One logical class column with no data. One character column with no header (X__1), will need to be renamed to SA1 and set to numeric so this dataset can be joined to others. The other 12 columns are numeric, containing counts of people with varying levels of educational qualifications in each statistical area.
 names(education) #X__1 will need to be changed to SA1. The other headers are varying levels of education qualifications, making this data a good candidate for gathering into a single column as they all pertain to the same type of information.
 class(education) #Class of object is a data frame as expected.
-attributes(education)
-glimpse(education)
 
 #Geographical Data
 
@@ -203,28 +151,6 @@ dim(geo_lookup) #3 columns and 14,382 rows - more rows than the education data. 
 str(geo_lookup) #First column is SA1 values which are integers. Second column is LGA names which are characters. The third column has Metropolitan Melbourne Areas which are also characters. 
 names(geo_lookup) #Names can be more neatly given for the SA1 and LGA variables.
 class(geo_lookup) #Class is data frame, as expected.
-attributes(geo_lookup)
-glimpse(geo_lookup)
-
-#Local Government Area Health Data - Subset
-
-#Define which subset of columns to take
-Subset_Columns <- c("LGA Name", "Travel time to Melbourne", "Total fertility rate", "Top 5 overseas countries of birth - country 1",
-                    "Top 5 ancestries - ancestry 1", "People who believe multiculturalism makes life better", "People reporting high/very high psychological distress", "People who live near public transport", "Primary Health Network (PHN)", "Median household income")
-
-LGA_health_ss <- LGA_health[Subset_Columns] #Apply the subset filter to the data frame
-
-head(LGA_health_ss) #No extra columns or rows to trim.
-tail(LGA_health_ss) #Note that the last column is for all of Victoria.
-dim(LGA_health_ss) #After subsetting, we have 80 rows and 10 columns.
-str(LGA_health_ss) #Variables are all character in type. 
-names(LGA_health_ss)
-glimpse(LGA_health_ss)
-class(LGA_health_ss) #Class is data frame, as expected.
-attributes(LGA_health_ss)
-summary(LGA_health_ss)
-
-
 
 ```
 
@@ -317,7 +243,7 @@ glimpse(edu_by_LGA)
 
 Scan the data for missing values, inconsistencies and obvious errors. In this step, you should fulfil the minimum requirement #7. In addition to the R codes and outputs, explain how you dealt with these values.
 
-The Education Levels by LGA data has been scanned for missing values (denoted by NA). 12 missing values where identfied in the LGA column using colSums. This makes sense as we have 12 attributes for education level so any counts of people where location data was not available would be recorded as NA. 12 out of 984 records is very small but each record is actually a count of people so if we exclude NAs by using complete.cases, we could end up excluding a large number of people counted. Checking tail(edu_by_LGA), we can see that the total number of counts for people without an LGA identified is 8,119. This compares to the total count of people ________. 
+The Education Levels by LGA data has been scanned for missing values (denoted by NA). 12 missing values where identfied in the LGA column using colSums. This makes sense as we have 12 attributes for education level so any counts of people where location data was not available would be recorded as NA. 12 out of 984 records is very small but each record is actually a count of people so if we exclude NAs by using complete.cases, we could end up excluding a large number of people counted. Checking tail(edu_by_LGA), we can see that the total number of counts for people without an LGA identified is 8,119. This compares to the total count of people. 
 
 ```{r echo=TRUE}
 #Check the Education by LGA data frame for missing values using which(is.na()). 
@@ -337,7 +263,24 @@ edu_by_LGA_complete <- edu_by_LGA[complete.cases(edu_by_LGA), ]
 
 which(is.na(edu_by_LGA_complete)) #Now all missing values have been excluded. 
 
-#check for the special value
+#Check for the special value
+which(is.nan(edu_by_LGA$PeopleSum)) # There are no 'Not a Number' values in the PeopleSum
+
+#Checking for inconsistencies
+hist(edu_by_LGA$PeopleSum,
+     main = "Population by Local Council Area",
+     xlab = "Population",
+     ylab = "Count of Councils",
+     col = "#66CDAA",
+     breaks = 15)
+
+
+sum_edu <- edu_by_LGA %>% group_by(Ed_level) %>% summarise(PopK = sum(PeopleSum)/1000)
+wrapped <- function(strings, width) vapply(strings, function(s)paste(collapse="\n", strwrap(s, width)), FUN.VALUE="", USE.NAMES=FALSE) #May need to reference this code....(http://r.789695.n4.nabble.com/Wrap-names-arg-text-in-barplot-td4593439.html)
+barplot(sum_edu$PopK[1:8], names.arg = wrapped(sum_edu$Ed_level[1:8],8),
+        las=2, cex.names = 0.8, col = "#9e9ac8",
+        main = "Sum of Different Education Levels",
+        ylab = "People")
 
 
 ```
@@ -369,7 +312,7 @@ edu_uni$Ed_level <- factor(edu_uni$Ed_level,
                                       "Bachelor Degree Level"),
                            levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
                                       "Bachelor Degree Level"))
-boxplot(People~Ed_level, data = edu_uni) 
+boxplot(edu_uni$People ~ edu_uni$Ed_level)
 
 
 #let's mutate post and grad into one (total counts)
@@ -422,7 +365,7 @@ edu_uni_lga$Ed_level <- factor(edu_uni_lga$Ed_level,
                                           "Bachelor Degree Level"),
                                levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
                                           "Bachelor Degree Level"))
-boxplot(People~Ed_level, data = edu_uni_lga) 
+boxplot(edu_uni_lga$PeopleSum~edu_uni_lga$Ed_level) 
 
 #let's mutate post and grad into one (total counts)
 glimpse(education)
