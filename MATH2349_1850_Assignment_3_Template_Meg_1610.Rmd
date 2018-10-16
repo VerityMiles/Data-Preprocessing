@@ -237,7 +237,7 @@ Firstly, some trimming of extraneous data rows and columns was undertaken to cle
 
 ####Tidy Data Principles:
 
-1. Each variable must have its own column.
+1. Each variable must have its own column. - population needs to have its own column* Not tidy
 2. Each observation must have its own row.
 3. Each value must have its own cell.
 
@@ -286,8 +286,11 @@ head(edu_tidy_join)
 dim(edu_tidy_join)
 str(edu_tidy_join)
 glimpse(edu_tidy_join)
+tail(edu_tidy_join)
 
 summary(edu_tidy_join)
+
+
 
 ```
 
@@ -295,10 +298,14 @@ summary(edu_tidy_join)
 
 Create/mutate at least one variable from the existing variables (minimum requirement #6). In addition to the R codes and outputs, explain everything that you do in this step..
 
+Now that we have Education Levels by LGA from joining the two data sets, we have grouped observations by LGA first, then by Education Level and then calculated a summary of the number of people which each qualification for each LGA.
+
+
 ```{r echo=TRUE}
 
 #Grouping by LGA
-edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(People = sum(People))
+edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(PeopleSum = sum(People))
+
 head(edu_by_LGA)
 glimpse(edu_by_LGA)
 
@@ -309,6 +316,8 @@ glimpse(edu_by_LGA)
 ##	Scan I 
 
 Scan the data for missing values, inconsistencies and obvious errors. In this step, you should fulfil the minimum requirement #7. In addition to the R codes and outputs, explain how you dealt with these values.
+
+The Education Levels by LGA data has been scanned for missing values (denoted by NA). 12 missing values where identfied in the LGA column using colSums. This makes sense as we have 12 attributes for education level so any counts of people where location data was not available would be recorded as NA. 12 out of 984 records is very small but each record is actually a count of people so if we exclude NAs by using complete.cases, we could end up excluding a large number of people counted. Checking tail(edu_by_LGA), we can see that the total number of counts for people without an LGA identified is 8,119. This compares to the total count of people ________. 
 
 ```{r echo=TRUE}
 #Check the Education by LGA data frame for missing values using which(is.na()). 
@@ -321,21 +330,15 @@ colSums(is.na(edu_by_LGA)) #The missing values are in the LGA column, meaning th
 
 tail(edu_by_LGA)
 
-na_perc <- 12/984*100
-na_perc #Given only 1.2% of the data for LGAs is missing, this is tolerable. Since this is a character variable, we cannot impute but we could remove. 
+edu_by_LGA_NAs <- edu_tidy_join %>% group_by(Ed_level) %>% summarise(PeopleSum = sum(People)) #use to demonstrate it's okay to remove NAs
 
 #Remove NAs
 edu_by_LGA_complete <- edu_by_LGA[complete.cases(edu_by_LGA), ]
 
 which(is.na(edu_by_LGA_complete)) #Now all missing values have been excluded. 
 
-#Check the Health by LGA data frame for missing values using which(is.na()). 
+#check for the special value
 
-dim(LGA_health_ss)
-
-which(is.na(LGA_health_ss ))
-
-tail(LGA_health_ss) #This makes sense that there are some missing values for Victoria as this is an aggregate, not a LGA in itself. 
 
 ```
 
@@ -343,6 +346,15 @@ tail(LGA_health_ss) #This makes sense that there are some missing values for Vic
 ##	Scan II
 
 Scan the numeric data for outliers. In this step, you should fulfil the minimum requirement #8. In addition to the R codes and outputs, explain how you dealt with these values.
+
+To scan for outliers, we decided to focus only on postgraduate (including graduate diploma and graduate certificate level) and bachelor degree level observations. The education level data was filtered to contain observations for bachelor degree level and higher as per the ordered factor specified in a previous step. We then refactored the variabiles to only include the three levels of postgraduate degree, graduate diploma/certificate and bachelor degree level. We then plotted a box plot graph to identify if outliers were present and observered a large number of outliers at all three levels of qualification, indicating that the data is heavily positively skewed. 
+
+Next, we mutated the data to create a column for those with a postgraduate qualification (PostGrad, including graduate diploma/certificate) and those with an bachelor degree qualification (undergrad).
+
+One of the issues with scanning for outliers is that each observation is a raw count of people with a certain qualification in each LGA. Therefore, LGAs with larger populations will naturally have higher counts of people for all categories. To account for variances in population size, a proportion has been calcluated of number of people with a postgraduate degree and number of people with a bachelor level degree proportionate to the total number people. Now the box plot is more normally distributed though there are still a number of outliers and the data is still postively skewed. 
+
+Finally, we looked at the combined number of people with either a postgraduate degree or a bachelors degree
+
 
 ```{r echo=TRUE}
 
@@ -363,7 +375,7 @@ boxplot(People~Ed_level, data = edu_uni)
 #let's mutate post and grad into one (total counts)
 edu_uni_tot <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
                                      UnderGrad = education$`Bachelor Degree Level`) %>% 
-  select(SA1, Post, UnderGrad)
+                              select(SA1, Post, UnderGrad)
 head(edu_uni_tot)
 edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
 edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
@@ -379,7 +391,7 @@ length(box_under_tot$out) # 454 outliers for under grad
 #let's mutate post and grad into one (but as a proportion of the total)
 edu_uni_prop <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`)/education$Total,
                                       UnderGrad = education$`Bachelor Degree Level`/education$Total) %>% 
-  select(SA1, Post, UnderGrad)
+                                select(SA1, Post, UnderGrad)
 head(edu_uni_prop)
 glimpse(edu_uni_prop)
 edu_uni_prop$SA1 <- as.numeric(edu_uni_prop$SA1)
@@ -415,13 +427,39 @@ boxplot(People~Ed_level, data = edu_uni_lga)
 #let's mutate post and grad into one (total counts)
 glimpse(education)
 edu_uni_tot_lga <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
-                                         UnderGrad = education$`Bachelor Degree Level`) %>% select(LGA, Post, UnderGrad)
+                                         UnderGrad = education$`Bachelor Degree Level`) %>% select(SA1, Post, UnderGrad)
 
 head(edu_uni_tot)
 edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
 edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
 head(edu_uni_tot2)
 glimpse(edu_uni_tot2)
+
+################################
+# Handling Outliers
+################################
+
+# Replace NAs with 0 values in the proportions (NA's occured due to 0/0 mutate)
+edu_uni_prop2[which(is.na(edu_uni_prop2$Post)),] <- 0
+edu_uni_prop2[which(is.na(edu_uni_prop2$UnderGrad)),] <- 0
+
+cap <- function(x){
+  quantiles <- quantile( x, c(.05, 0.25, 0.75, .95 ) )
+  x[ x < quantiles[2] - 1.5*IQR(x) ] <- quantiles[1]
+  x[ x > quantiles[3] + 1.5*IQR(x) ] <- quantiles[4]
+  x
+} # from Module 6 of MATH 2349, credit to Dr Anil Dolgun
+
+post_cap <- cap(edu_uni_prop2$Post)
+boxplot(post_cap, main = 'Post Grad Proportions by LGA Code (Outliers Winsorised)')
+summary(post_cap)
+
+under_cap <- cap(edu_uni_prop2$UnderGrad)
+boxplot(under_cap, main = 'UnderGrad Proportions by LGA Code (Outliers Winsorised)')
+summary(under_cap)
+
+boxplot(post_cap, under_cap)
+
 ```
 
 
