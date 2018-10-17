@@ -85,7 +85,17 @@ After importing the education data set, an error occurred. At the bottom of the 
 
 ## Understand 
 
-Summarise the types of variables and data structures, check the attributes in the data. In addition to the R codes and outputs, explain briefly the steps that you have taken. In this section, show that you have fulfilled minimum requirements 2-4.
+The following techniques were used to inspect the data:
+<ul>
+<li> head() - to inspect the first few rows for any extraneous rows or columns that need to be trimmed and to get an intial picture of the data
+<li> tail() - to inspect the last few rows for any extraneous rows that needed to be trimmed
+<li> dim() - to check the size of the data sets
+<li> str() - to check the internal structure of the data sets and identify the variable type of each attribute
+<li> names() - to check the names of the attributes in the data sets and identify all the information each data set contains
+<li> class() - to check the class of the overall data sets
+</ul>
+
+This gave us a complete understanding of the data so we chose not to use additonal functions, such as attribute() or glimpse(), as we felt this would be redundant. At this stage, we considered the attribute data types and whether they would need to be changed in the next step of preprocessing. 
 
 ####Data set 1: Education Levels - Types of variables
 
@@ -129,6 +139,9 @@ The values in this column are categorical data so character is the correct data 
 
 Please note that there is one LGA name that is 'Unincorporated Vic'. This is a legitimate value and should not be treated as a missing value.  
 
+
+
+
 ```{r echo=TRUE}
 
 #Education Levels
@@ -156,19 +169,31 @@ class(geo_lookup) #Class is data frame, as expected.
 
 Check if the data conforms the tidy data principles. If your data is not in a tidy format, reshape your data into a tidy format (minimum requirement #5). In addition to the R codes and outputs, explain everything that you do in this step.
 
-Firstly, some trimming of extraneous data rows and columns was undertaken to clean the data set and make it more usable for analysis. Similarly, the column name for the education data was changed from the generic X__1 to SA1 to make it easier to understand. A totals row was also added to the data set so that proportions could be calculated for each level of education. 
+Firstly, some trimming of extraneous rows and columns, which did not contain any data, was undertaken to clean up the data set and make it more usable for analysis. Similarly, the column name for the education data was changed from the generic X__1 to SA1 to make it easier to understand. A totals row was specified so we could subset the data to ensure it excludes any of the extraneous rows and the totals row at the bottom of the data set. 
 
 ####Tidy Data Principles:
 
-1. Each variable must have its own column. - population needs to have its own column* Not tidy
+1. Each variable must have its own column. 
 2. Each observation must have its own row.
 3. Each value must have its own cell.
 
-The data sets do generally conform to the tidy data principles. However, it could be argued that the levels of education in the Education Levels data set qualify as a single variable, rather than a set of different variables. To address this, the gather function has been applied to all the education levels to bring them into a single column called Ed_level. Now the data set is comprised of three attributes, statistical area (SA1), level of education and a count of people in each SA1 that meet a particular level of education.
+####Data set 1: Education Levels
 
-As mentioned in the previous section, the education level variable is a good candidate for creating an ordered factor variable as there is a naturally ordering of education levels. Education levels were labelled and ordered. Note that some observations had "Not Stated" and "Not Applicable" for education level. These have been ordered last in the factor ordering. 
+The education data set does not conform to the the tidy data principles. Each variable should have its own column. Population count (or number of people) is a variable but it is not contained within its own column but spread out across the data set. 
 
-Now that the Education Levels data is tidy, we have joined it with the Local Government Area lookup data. Now we are able to access how many people in each LGA achieved each particular level of education. In order to do this, SA1 has been converted to a numeric variable in the Education Level data so that it is compatible with the LGA Lookup dataset. A left join was chosen, prioritising the education data on the left hand side as we want to be able to see as many LGAs for each observation in the Education Levels as we can. 
+It could be argued that the levels of education qualify conceptually as a single variable, rather than a set of different variables, so each education level should be an observation in its own row.
+
+To address this, the gather function has been applied to all the education levels to bring them into a single column called Ed_level. Now the data set is comprised of three attributes, statistical area (SA1), level of education and a count of people in each SA1 that meet a particular level of education.
+
+As mentioned in the previous section, the education level variable is a good candidate for creating an ordered factor variable as there is a naturally ordering of education levels. Education levels were labelled and ordered. Note that some observations had "Not Stated" and "Not Applicable" for education level. We made the decision to include these, ordered last in the factor ordering. We didn't want to exclude them as this may introduce bias to the data. 
+
+####Data set 2: Geographic Look Up
+
+This data set conforms to the tidy data principles.
+
+####Joining the Data
+
+Now that the Education Levels data is tidy, we have joined it with the Geographic Look Up data. Now we are able to access how many people in each LGA achieved each particular level of education. In order to do this, SA1 has been converted to a numeric variable in the Education Level data so that it is compatible with the LGA Lookup dataset. A left join was chosen, prioritising the education data on the left hand side as we want to be able to see as many LGAs for each observation in the Education Levels as we can. 
 
 The LGA variable in the LGA Lookup data set is called "LGA_NAME17" which is the metadata label used by the source (ABS). The column name has been changed to LGA which is simpler for users to read. 
 
@@ -180,6 +205,7 @@ education <- education[-1,-1] #Removing first row and column
 colnames(education)[1] <- "SA1" #The first column has no header. Setting column header to SA1. 
 totalrow <- which(education$SA1 == 'Total') #Add a totals row at the bottom of the data frame. 
 education <- education[1:totalrow - 1,] #Removing empty rows at end of data frame.
+tail(education)
 
 
 edu_tidy <- gather(education, "Ed_level", "People", 2:length(education)) #Gathering column variables into a single row
