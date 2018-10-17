@@ -55,7 +55,7 @@ The columns in this data set are:
 
 The different education levels are coded as per the Australian Classification of Education (ASCED) 2001. For more information click [here](http://www.abs.gov.au/ausstats/abs@.nsf/Latestproducts/1272.0Main%20Features12001?opendocument&tabname=Summary&prodno=1272.0&issue=2001&num=&view=).  
 
-When using data from the Australian Census it is important to remember that all data is self-reported. This means that care needs to be taken when making conclusions from this data source.  
+When using data from the Australian Census it is important to remember that all data is self-reported. This means that care needs to be taken when making conclusions from this data source. The other thing to consider when using census data is that cells with small numbers are randomly adjusted to protect confidentiality. This is something to be aware of, particularly when aggregating data to larger geographic areas (like we are in this assignment).  
 
 ####Data set 2: Geographic Look Up 
 The second data set that we used is a geographic lookup linking SA1s to local government areas (LGAs) and the Greater Capital City Statistical Area (GCCSA) of Greater Melbourne. We compiled this lookup using geographic files for SA1s and LGAs from the ABS and did a spatial join (within QGIS).  [Click here for more information about QGIS](https://www.qgis.org/en/site/).  
@@ -79,9 +79,6 @@ geo_lookup <- read_csv("SA1_LGA_LookUp.csv")
 kable(head(geo_lookup))
 
 ```
-
-After importing the education data set, an error occurred. At the bottom of the dataset, there is a disclaimer with extra informtion. The error states that this information is not imported. This is not an issue as we didn't need that data.
-
 
 ## Understand 
 
@@ -139,43 +136,71 @@ The values in this column are categorical data so character is the correct data 
 
 Please note that there is one LGA name that is 'Unincorporated Vic'. This is a legitimate value and should not be treated as a missing value.  
 
-
-
-
 ```{r echo=TRUE}
 
 #Education Levels
 
-kable(head(education)) #First column and first rows contain no data and need to be trimmed.
-kable(tail(education)) #Extra rows at bottom of the data frame with no data, need to be trimmed.
-dim(education) #14 columns and 14,081 rows
-str(education) #One logical class column with no data. One character column with no header (X__1), will need to be renamed to SA1 and set to numeric so this dataset can be joined to others. The other 12 columns are numeric, containing counts of people with varying levels of educational qualifications in each statistical area.
-names(education) #X__1 will need to be changed to SA1. The other headers are varying levels of education qualifications, making this data a good candidate for gathering into a single column as they all pertain to the same type of information.
-class(education) #Class of object is a data frame as expected.
-
-#Geographical Data
-
-kable(head(geo_lookup)) #No extra columns or rows to trim.
-kable(tail(geo_lookup)) #No extra columns or rows to trim. A few missing values are visible.
-dim(geo_lookup) #3 columns and 14,382 rows - more rows than the education data. Will consider this when choosing the type of join to use. 
-str(geo_lookup) #First column is SA1 values which are integers. Second column is LGA names which are characters. The third column has Metropolitan Melbourne Areas which are also characters. 
-names(geo_lookup) #Names can be more neatly given for the SA1 and LGA variables.
-class(geo_lookup) #Class is data frame, as expected.
+kable(head(education))
+kable(tail(education))
+dim(education)
+str(education)
+names(education)
+class(education)
 
 ```
+
+#####Brief summary of Education Data
+<ul>
+<li> First column and first rows contain no data and need to be trimmed  
+<li> Extra rows at bottom of the data frame with no data and need to be trimmed  
+<li> There are 14 columns and 14,081 rows 
+<ul><li> One logical class column with no data
+<li> One character column with no header - will need to be renamed SA1 and set to numeric so the dataset can be joined to others  
+<li> 12 numeric columns, containing counts of people with varying levels of educational qualifications in each statistical area  </ul>
+<li> #X__1 will need to be changed to SA1  
+<li> The other headers are varying levels of educational qualifications, making this data a good candidate for gathering into a single column as they all pertain to the same type of information
+<li> Class of object is a data frame as expected  
+</ul>
+
+
+```{r echo = TRUE}
+#Geographical Data
+
+kable(head(geo_lookup))
+kable(tail(geo_lookup))
+dim(geo_lookup)
+str(geo_lookup)
+names(geo_lookup)
+class(geo_lookup)
+
+```
+
+#####Brief summary of Geographical Data
+<ul>
+<li> There are no extra columns or rows at the top of the data to trim 
+<li> There are no extra columns or rows at the end of the data to trim. A few missing values are visible
+<li> There are 3 columns and 14,382 rows
+<ul><li> More rows than the education data
+<li> Will consider this when choosing the type of join to use </ul>
+<li> First column is integer SA1 values
+<li> Second column is character LGA names
+<li> Third coolumn is character names for Melbourne Metropolitan Area
+<li> Column names can be more neatly given for SA1 and LGA variables  
+<li> Class of object is a data frame as expected  
+</ul>
 
 
 ##	Tidy & Manipulate Data I 
 
-Check if the data conforms the tidy data principles. If your data is not in a tidy format, reshape your data into a tidy format (minimum requirement #5). In addition to the R codes and outputs, explain everything that you do in this step.
+Check if the data conforms the tidy data principles. If your data is not in a tidy format, reshape your data into a tidy format (minimum requirement #5). In addition to the R codes and outputs, explain everything that you do in this step.  
 
-Firstly, some trimming of extraneous rows and columns, which did not contain any data, was undertaken to clean up the data set and make it more usable for analysis. Similarly, the column name for the education data was changed from the generic X__1 to SA1 to make it easier to understand. A totals row was specified so we could subset the data to ensure it excludes any of the extraneous rows and the totals row at the bottom of the data set. 
+Firstly, some trimming of extraneous rows and columns, which did not contain any data, was undertaken to clean up the data set and make it more usable for analysis. Similarly, the column name for the education data was changed from the generic X__1 to SA1 to make it easier to understand. A totals row was specified so we could subset the data to ensure it excludes any of the extraneous rows and the totals row at the bottom of the data set.  
 
 ####Tidy Data Principles:
-
-1. Each variable must have its own column. 
-2. Each observation must have its own row.
-3. Each value must have its own cell.
+<ol>
+<li> Each variable must have its own column  
+<li> Each observation must have its own row  
+<li> Each value must have its own cell  </ol>
 
 ####Data set 1: Education Levels
 
@@ -197,18 +222,25 @@ Now that the Education Levels data is tidy, we have joined it with the Geographi
 
 The LGA variable in the LGA Lookup data set is called "LGA_NAME17" which is the metadata label used by the source (ABS). The column name has been changed to LGA which is simpler for users to read. 
 
+#####Education Data
 
 ```{r echo=TRUE}
 
-#Education Data
-education <- education[-1,-1] #Removing first row and column
-colnames(education)[1] <- "SA1" #The first column has no header. Setting column header to SA1. 
-totalrow <- which(education$SA1 == 'Total') #Add a totals row at the bottom of the data frame. 
-education <- education[1:totalrow - 1,] #Removing empty rows at end of data frame.
-tail(education)
+#Removing first row and column
+education <- education[-1,-1]
 
+#The first column has no header. Setting column header to SA1
+colnames(education)[1] <- "SA1"
 
-edu_tidy <- gather(education, "Ed_level", "People", 2:length(education)) #Gathering column variables into a single row
+#Add a totals row at the bottom of the data frame
+totalrow <- which(education$SA1 == 'Total')
+
+#Removing empty rows at end of data frame
+education <- education[1:totalrow - 1,] 
+kable(tail(education))
+
+#Gathering column variables into a single row
+edu_tidy <- gather(education, "Ed_level", "People", 2:length(education)) 
 
 kable(head(edu_tidy))
 
@@ -222,14 +254,22 @@ edu_tidy <- edu_tidy %>% mutate(Ed_level = factor(Ed_level, levels = c("Postgrad
                                                              "Supplementary Codes", "Not stated", "Not applicable", "Total"),
                                                   ordered = TRUE))
 
-edu_tidy <- transform(edu_tidy, SA1 = as.numeric(SA1)) #Setting the variable SA1 to numeric so it can be joined with other datasets. 
+#Setting the variable SA1 to numeric so it can be joined with other datasets
+edu_tidy <- transform(edu_tidy, SA1 = as.numeric(SA1)) 
 
-#Local Government Area Lookup Data - provides a concordance between LGA and SA1 geographic areas
+```
+
+####Joining the datasets together
+The LGA lookup data provides a concordance between LGA and SA1 geographic areas
+
+
+```{r echo = TRUE}
+
 #Left Join Education Data to geographical area lookup to match observations to their LGA.
-
 edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17", "MetroMelbourne")], by = c("SA1" = "SA1_7DIG16"))
 
-names(edu_tidy_join)[4] <- "LGA" #Change name from LGA_NAME17 to LGA for neatness. 
+#Change name from LGA_NAME17 to LGA for neatness. 
+names(edu_tidy_join)[4] <- "LGA"
 
 kable(head(edu_tidy_join))
 dim(edu_tidy_join)
@@ -238,13 +278,9 @@ kable(tail(edu_tidy_join))
 
 summary(edu_tidy_join)
 
-
-
 ```
 
 ##	Tidy & Manipulate Data II 
-
-Create/mutate at least one variable from the existing variables (minimum requirement #6). In addition to the R codes and outputs, explain everything that you do in this step..
 
 Now that we have Education Levels by LGA from joining the two data sets, we have grouped observations by LGA first, then by Education Level and then calculated a summary of the number of people which each qualification for each LGA.
 
@@ -257,36 +293,46 @@ edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(PeopleSum 
 kable(head(edu_by_LGA))
 glimpse(edu_by_LGA)
 
-
 ```
 
 
 ##	Scan I 
 
-Scan the data for missing values, inconsistencies and obvious errors. In this step, you should fulfil the minimum requirement #7. In addition to the R codes and outputs, explain how you dealt with these values.
-
-The Education Levels by LGA data has been scanned for missing values (denoted by NA). 12 missing values where identfied in the LGA column using colSums. This makes sense as we have 12 attributes for education level so any counts of people where location data was not available would be recorded as NA. 12 out of 984 records is very small but each record is actually a count of people so if we exclude NAs by using complete.cases, we could end up excluding a large number of people counted. Checking tail(edu_by_LGA), we can see that the total number of counts for people without an LGA identified is 8,119. This compares to the total count of people. 
+The Education Levels by LGA data has been scanned for missing values (denoted by NA). 12 missing values where identfied in the LGA column using colSums. This makes sense as we have 12 attributes for education level so any counts of people where location data was not available would be recorded as NA. 12 out of 984 records is very small but each record is actually a count of people so if we exclude NAs by using complete.cases, we could end up excluding a large number of people counted. Checking tail(edu_by_LGA), we can see that the total number of counts for people without an LGA identified is 8,119. This compares to the total count of people. Another method we could have used to reduce the number of NAs is to have gone back to the original Geographic Lookup table and identified why there were missing values present initially.
 
 ```{r echo=TRUE}
-#Check the Education by LGA data frame for missing values using which(is.na()). 
 
-dim(edu_by_LGA) #There are 984 observations across the 3 variables. 
+#Check the Education by LGA data frame for missing values using which(is.na())
+dim(edu_by_LGA)
 
-which(is.na(edu_by_LGA)) #There are a number of missng values at the bottom of the data set. 
+which(is.na(edu_by_LGA)) 
 
-colSums(is.na(edu_by_LGA)) #The missing values are in the LGA column, meaning there are some observations of education level that do not have a corresponding LGA available. 
+colSums(is.na(edu_by_LGA))
 
 kable(tail(edu_by_LGA))
 
-edu_by_LGA_NAs <- edu_tidy_join %>% group_by(Ed_level) %>% summarise(PeopleSum = sum(People)) #use to demonstrate it's okay to remove NAs
+edu_by_LGA_NAs <- edu_tidy_join %>% group_by(Ed_level) %>% summarise(PeopleSum = sum(People)) 
 
 #Remove NAs
 edu_by_LGA_complete <- edu_by_LGA[complete.cases(edu_by_LGA), ]
 
-which(is.na(edu_by_LGA_complete)) #Now all missing values have been excluded. 
+which(is.na(edu_by_LGA_complete))
 
 #Check for the special value
-which(is.nan(edu_by_LGA$PeopleSum)) # There are no 'Not a Number' values in the PeopleSum
+which(is.nan(edu_by_LGA$PeopleSum))
+
+```
+
+####LGA Observations
+<ul>
+<li> There are 984 observations across the 3 variables
+<li> There are a number of missing values at the bottom of the dataset
+<li> The missing values are in the LGA column, meaning there are some observations of education level that do not have a corresponding LGA available
+<li> All missing values were excluded
+<li> There were no 'Not a Number' values in the PeopleSum column of the LGA-based data
+</ul>
+
+```{r echo = TRUE}
 
 #Checking for inconsistencies
 hist(edu_by_LGA$PeopleSum,
@@ -310,8 +356,6 @@ barplot(sum_edu$PopK[1:8], names.arg = wrapped(sum_edu$Ed_level[1:8],8),
 
 ##	Scan II
 
-Scan the numeric data for outliers. In this step, you should fulfil the minimum requirement #8. In addition to the R codes and outputs, explain how you dealt with these values.
-
 To scan for outliers, we decided to focus only on postgraduate (including graduate diploma and graduate certificate level) and bachelor degree level observations. The education level data was filtered to contain observations for bachelor degree level and higher as per the ordered factor specified in a previous step. We then refactored the variabiles to only include the three levels of postgraduate degree, graduate diploma/certificate and bachelor degree level. We then plotted a box plot graph to identify if outliers were present and observered a large number of outliers at all three levels of qualification, indicating that the data is heavily positively skewed. 
 
 Next, we mutated the data to create a column for those with a postgraduate qualification (PostGrad, including graduate diploma/certificate) and those with an bachelor degree qualification (undergrad).
@@ -323,11 +367,11 @@ Finally, we looked at the combined number of people with either a postgraduate d
 
 ```{r echo=TRUE}
 
-# Post grad and Under Grad count
+#Post grad and Under Grad count
 edu_uni <- edu_tidy_join %>% filter(Ed_level <= 'Bachelor Degree Level')
 summary(edu_uni)
 
-# Refactor levels of education
+#Refactor levels of education
 edu_uni$Ed_level <- factor(edu_uni$Ed_level,
                            labels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
                                       "Bachelor Degree Level"),
@@ -337,7 +381,7 @@ boxplot(edu_uni$People ~ edu_uni$Ed_level, cex.axis = 0.55,
         main = "Distribution of Population within SA1 by Education Level",
         ylab = "Population", xlab = "Education Level")
 
-#let's mutate post and grad into one (total counts)
+#Mutate post and grad into one (total counts)
 edu_uni_tot <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
                                      UnderGrad = education$`Bachelor Degree Level`) %>% 
                               select(SA1, Post, UnderGrad)
@@ -347,19 +391,20 @@ edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME1
 kable(head(edu_uni_tot2))
 glimpse(edu_uni_tot2)
 
-# spread then mutate, will be easier
+#Spread and then mutate
 box_tot <- boxplot(edu_uni_tot2[,2:3], main  = 'Distribution of Population Qualifications',
                         xlab = "Highest Educational Qualification", cex.axis = 0.55,
                         names = c("Postgraduate", "Undergraduate"),
                         ylab = "Population")
-length(box_tot$out) # 986 outliers for both postgraduate and undergraduate qualifications
+length(box_tot$out)
 
 ```
 
+There are 986 outliers for both postgraduate and undergraduate qualifications
+
 ```{r}
 
-
-#let's mutate post and grad into one (but as a proportion of the total)
+#Mutate post and grad into one dataset (using proportion of the total)
 edu_uni_prop <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`)/education$Total,
                                       UnderGrad = education$`Bachelor Degree Level`/education$Total) %>% 
                                 select(SA1, Post, UnderGrad)
@@ -367,25 +412,25 @@ kable(head(edu_uni_prop))
 glimpse(edu_uni_prop)
 edu_uni_prop$SA1 <- as.numeric(edu_uni_prop$SA1)
 edu_uni_prop2 <- edu_uni_prop %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
-# spread then mutate, will be easier
-box_post_prop <- boxplot(edu_uni_prop2[,2], main = 'Proportion of Post Grad Students per Region')
-length(box_post_prop$out) # 203 outliers, significant drop in outliers when you take into account the proportion
-box_under_prop <- boxplot(edu_uni_prop2[,3], main = 'Proportion of Under Grad Students per Region')
-length(box_under_prop$out) # 122 outliers
 
-boxplot(edu_uni_tot2[,2:3])
-boxplot(edu_uni_prop2[,2:3]) # both visuals
-# finding proportions drastically reduces the count of outliers
+#Spread and then mutate the data
+box_tot_post <- boxplot(edu_uni_prop2[,2:3], main  = 'Distribution of Population Qualifications',
+                        xlab = "Highest Educational Qualification", cex.axis = 0.55,
+                        names = c("Postgraduate", "Undergraduate"),
+                        ylab = "Population")
+length(box_tot_post$out)
 
-### Now what to do with outliers?
+```
 
-####################################
-#LGA based outlier work
+Converting the data from absolute counts to proportions drastically reduces the count of outliers to 346  
 
-# Post grad and Under Grad count
+#### Handling LGA Outliers
+
+```{r}
+
+# Postgraduate and undergraduate count
 edu_uni_lga <- edu_by_LGA %>% filter(Ed_level <= 'Bachelor Degree Level')
 summary(edu_uni_lga)
-glimpse(edu_uni_lga)
 
 # Refactor levels of education
 edu_uni_lga$Ed_level <- factor(edu_uni_lga$Ed_level,
@@ -393,22 +438,26 @@ edu_uni_lga$Ed_level <- factor(edu_uni_lga$Ed_level,
                                           "Bachelor Degree Level"),
                                levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
                                           "Bachelor Degree Level"))
-boxplot(edu_uni_lga$PeopleSum~edu_uni_lga$Ed_level) 
+boxplot(edu_uni_lga$PeopleSum~edu_uni_lga$Ed_level,
+        main = "Distribution of People with Graduate Education",
+        xlab = "Highest Educational Qualification",
+        cex.axis = 0.55, ylab = "Population") 
 
-#let's mutate post and grad into one (total counts)
+#Mutation of the post and grad into one (total counts)
 glimpse(education)
 edu_uni_tot_lga <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
                                          UnderGrad = education$`Bachelor Degree Level`) %>% select(SA1, Post, UnderGrad)
 
-head(edu_uni_tot)
+kable(head(edu_uni_tot))
 edu_uni_tot$SA1 <- as.numeric(edu_uni_tot$SA1)
 edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
-head(edu_uni_tot2)
-glimpse(edu_uni_tot2)
+kable(head(edu_uni_tot2))
 
-################################
-# Handling Outliers
-################################
+```
+
+#### Handling Outliers
+
+```{r}
 
 # Replace NAs with 0 values in the proportions (NA's occured due to 0/0 mutate)
 edu_uni_prop2[which(is.na(edu_uni_prop2$Post)),] <- 0
@@ -422,14 +471,15 @@ cap <- function(x){
 } # from Module 6 of MATH 2349, credit to Dr Anil Dolgun
 
 post_cap <- cap(edu_uni_prop2$Post)
-boxplot(post_cap, main = 'Post Grad Proportions by LGA Code (Outliers Winsorised)')
+boxplot(post_cap, main = 'Proportion of Postgraduate Qualifications by LGA (Outliers Winsorised)')
 summary(post_cap)
 
 under_cap <- cap(edu_uni_prop2$UnderGrad)
-boxplot(under_cap, main = 'UnderGrad Proportions by LGA Code (Outliers Winsorised)')
+boxplot(under_cap, main = 'Proportion of Undergraduate Qualifications by LGA (Outliers Winsorised)')
 summary(under_cap)
 
-boxplot(post_cap, under_cap)
+boxplot(post_cap, under_cap, main = 'Proportion of Graduate Qualifications by LGA (Winsorised)',
+        names = c('Postgraduate', 'Undergraduate'))
 
 ```
 
@@ -437,57 +487,81 @@ boxplot(post_cap, under_cap)
 
 ##	Transform 
 
-Apply an appropriate transformation for at least one of the variables. In addition to the R codes and outputs, explain everything that you do in this step. In this step, you should fulfil the minimum requirement #9.
 
 ```{r echo=TRUE}
 
 #Filter the data to only include counts of people who completed postgraduate degree level education.
-
 edu_post <- edu_tidy_join %>%  filter(Ed_level == 'Postgraduate Degree Level')
 
-hist(edu_post$People) #Plotting a frequency histogram, the data is heavily right skewed. 
-
-edu_post_log <- log(edu_post$People) #Calculate the natural logarithm of the counts of people
-
-hist(edu_post_log) #The log transformation results a clear normal distribution
-
-#Filter the data to only include counts of people who completed bachelor degree level education.
-
-edu_under <- edu_tidy_join %>%  filter(Ed_level == 'Bachelor Degree Level')
-
-hist(edu_under$People) #Plotting a frequency histogram, the data is also heavily right skewed. 
-
-edu_under_log <- log(edu_under$People) #Applied the same treatment as above, taking the natural logarithm of the count. 
-
-hist(edu_under_log) #Again, the data is now normally distributed as a result of the log transformation. 
-
+#Plotting a frequency histogram
+hist(edu_post$People, main = "People with Postgraduate Degree",
+     xlab = "People", col = "#a1d99b", cex.axis = 0.7)
 
 ```
 
+The above histogram shows that the distribution is heavily right skewed. Hence we will undertake transformation of the data to see if we can transform the data to become normally distributed.
 
-##  Additional Step: Machine Learning
+```{r echo = TRUE}
+
+#Calculate the natural logarithm of the counts of people
+edu_post_log <- log(edu_post$People)
+
+hist(edu_post_log, main = "Log Transformation of People with Postgraduate Degree",
+     xlab = "Log Transformation of People", col = "#a1d99b")
+```
+
+The log transformation results in a clear normal distribution
+
+```{r echo = TRUE}
+
+#Filter the data to only include counts of people who completed bachelor degree level education.
+edu_under <- edu_tidy_join %>%  filter(Ed_level == 'Bachelor Degree Level')
+
+#Plotting a frequency histogram
+hist(edu_under$People, main = "People with Undergraduate Degree",
+     xlab = "People", col = "#9ecae1", cex.axis = 0.7)
+
+```
+
+The above histogram shows that the distribution is heavily right skewed. Hence we will undertake transformation of the data to see if we can transform the data to become normally distributed.
+
 ```{r echo=TRUE}
-# If we know how many undergrad students we have, can you predict how many students will undertake post grad courses?
-# Select data for ml
+
+#Applied the same treatment as above, taking the natural logarithm of the count
+edu_under_log <- log(edu_under$People) 
+
+hist(edu_under_log, main = "Log Transformation of People with Undergraduate Degree",
+     xlab = "Log Transformation of People", col = "#9ecae1")
+
+```
+
+Again, the data is now normally distributed as a result of the log transformation
+
+###  Additional Step: Machine Learning
+
+If we know how many people have undergraduate degrees, can we predict how many people will continue studying and complete postgraduate qualifications?
+
+```{r echo=TRUE}
+#Select data for machine learning
 data <- edu_uni_tot2[2:3]
 
-# Make task
+#Make task
 task <- makeRegrTask(data = data, target = 'Post')
 
-# Make learner
+#Make learner
 learner <- makeLearner('regr.glm')
 
-# Fit model
+#Fit model
 n <- nrow(data)
 training.set <- sample(n, size = 2*n/3)
 test.set <- setdiff(1:n, training.set)
 
 model <- mlr::train(learner, task, subset = training.set)
 
-# Predict
+#Predict
 pred <- predict(model, task = task, subset = test.set)
 
-# Evaluate
+#Evaluate
 performance(pred, measures = list(mse, mae))
 
 x <- pred$data$truth
@@ -496,10 +570,3 @@ plot(x, y, xlab = 'Actual Value', ylab = 'Predicted Value', col = 'blue', main =
 abline(1:500, 1:500, lwd = 2, col = 'red')
 ```
 
-NOTE: Follow the order outlined above in the report. Make sure your code is visible (within the margin of the page). Do not use View() to show your data instead give headers (using head() )
-
-
-Any further or optional pre-processing tasks can be added to the template using an additional section in the R Markdown file. Please also provide the R codes, outputs and brief explanations on why and how you applied these tasks on the data.
-
-<br>
-<br>
