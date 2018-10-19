@@ -2,11 +2,18 @@
 title: "MATH2349 Semester 2, 2018"
 author: "Verity Miles(s3644459), Sam Holt (s3381728), Meg Cuddihy (s3608125)"
 date: "17 October 2018"
+<<<<<<< HEAD
 output:
   html_notebook: default
   html_document:
     df_print: paged
-subtitle: Assignment 3: Education Data by Local Government Area
+ 
+subtitle: Assignment 3 -  Education Data by Local Government Area
+=======
+output: html_document
+html_notebook: default
+subtitle: Assignment 3 - Education Data by Local Government Area
+>>>>>>> f5efd3d74874a91a64f16bc53da27d126b26bd73
 ---
 
 ## Required packages 
@@ -16,6 +23,7 @@ library(readr)
 library(readxl)
 library(dplyr)
 library(tidyr)
+library(editrules)
 library(knitr)
 library(mlr)
 ```
@@ -72,10 +80,10 @@ The columns in this data set are:
 
 ```{r echo=TRUE, warning=FALSE}
 education <- read_excel("allVic_education.xls", skip = 8, col_names = TRUE)
-kable(head(education))
+head(education)
 
 geo_lookup <- read_csv("SA1_LGA_LookUp.csv")
-kable(head(geo_lookup))
+head(geo_lookup)
 
 ```
 
@@ -141,8 +149,8 @@ Please note that there is one LGA name that is 'Unincorporated Vic'. This is a l
 
 #Education Levels
 
-kable(head(education))
-kable(tail(education))
+head(education)
+tail(education)
 dim(education)
 str(education)
 names(education)
@@ -167,8 +175,8 @@ class(education)
 ```{r echo = TRUE}
 #Geographical Data
 
-kable(head(geo_lookup))
-kable(tail(geo_lookup))
+head(geo_lookup)
+tail(geo_lookup)
 dim(geo_lookup)
 str(geo_lookup)
 names(geo_lookup)
@@ -214,7 +222,7 @@ totalrow <- which(education$SA1 == 'Total')
 
 #Removing empty rows at end of data frame
 education <- education[1:totalrow - 1,] 
-kable(tail(education))
+tail(education)
 
 
 ```
@@ -251,7 +259,7 @@ names(edu_droptot)
 #Gathering column variables into a single row
 edu_tidy <- gather(edu_droptot, "Ed_level", "People", 2:length(edu_droptot)) 
 
-kable(head(edu_tidy))
+head(edu_tidy)
 
 #Set education level to an ordered factor
 edu_tidy <- edu_tidy %>% mutate(Ed_level = factor(Ed_level, levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
@@ -282,10 +290,10 @@ edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17"
 #Change name from LGA_NAME17 to LGA for neatness. 
 names(edu_tidy_join)[4] <- "LGA"
 
-kable(head(edu_tidy_join))
+head(edu_tidy_join)
 dim(edu_tidy_join)
 str(edu_tidy_join)
-kable(tail(edu_tidy_join))
+tail(edu_tidy_join)
 
 summary(edu_tidy_join)
 
@@ -301,7 +309,7 @@ Now that we have Education Levels by LGA from joining the two data sets, we have
 #Grouping by LGA
 edu_by_LGA <- edu_tidy_join %>% group_by(LGA, Ed_level) %>% summarise(PeopleSum = sum(People))
 
-kable(head(edu_by_LGA))
+head(edu_by_LGA)
 glimpse(edu_by_LGA)
 
 ```
@@ -320,7 +328,7 @@ which(is.na(edu_by_LGA))
 
 colSums(is.na(edu_by_LGA))
 
-kable(tail(edu_by_LGA))
+tail(edu_by_LGA)
 
 #Calculating the ratio of NAs for each level of education
 edu_by_LGA_NA <- edu_by_LGA[!complete.cases(edu_by_LGA),]
@@ -328,7 +336,6 @@ edu_by_LGA_NA <- edu_by_LGA[!complete.cases(edu_by_LGA),]
 edu_by_LGA_Totals <- edu_tidy_join %>% group_by(Ed_level) %>% summarise(PeopleSum = sum(People)) 
 
 edu_by_LGA_ratio <- edu_by_LGA %>% mutate(ratio = paste(round(edu_by_LGA_NA$PeopleSum/edu_by_LGA_Totals$PeopleSum*100, 2), "%")) %>% select(LGA, Ed_level, ratio)
-
 
 edu_by_LGA_ratio
 
@@ -352,9 +359,14 @@ which(is.nan(edu_by_LGA$PeopleSum))
 <li> There were no 'Not a Number' values in the PeopleSum column of the LGA-based data
 </ul>
 
-We also inspected the data graphically and no inconsistencies in the data were detected. 
+We checked for inconsistencies and obvious errors by checking the data against a validation rule that no population counts were negative or greater than 6.5 million as this would inicate a signficant data error. We also inspected the data graphically and no inconsistencies in the data were detected. 
 
 ```{r echo = TRUE}
+
+#check none of the sum totals are negative or greater than the population fo victoria ()
+rule1 <- editrules::editset(c('PeopleSum >= 0', 'PeopleSum < 6500000'))
+any(violatedEdits(rule1, edu_by_LGA_complete)) # all FALSE
+
 
 #Checking for inconsistencies
 hist(edu_by_LGA$PeopleSum,
@@ -364,11 +376,12 @@ hist(edu_by_LGA$PeopleSum,
      col = "#66CDAA",
      breaks = 15)
 
-
 sum_edu <- edu_by_LGA %>% group_by(Ed_level) %>% summarise(PopK = sum(PeopleSum)/1000)
-wrapped <- function(strings, width) vapply(strings, function(s)paste(collapse="\n", strwrap(s, width)), FUN.VALUE="", USE.NAMES=FALSE) #May need to reference this code....(http://r.789695.n4.nabble.com/Wrap-names-arg-text-in-barplot-td4593439.html)
+
+wrapped <- function(strings, width) vapply(strings, function(s)paste(collapse="\n", strwrap(s, width)), FUN.VALUE="", USE.NAMES=FALSE) # from (http://r.789695.n4.nabble.com/Wrap-names-arg-text-in-barplot-td4593439.html)
+
 barplot(sum_edu$PopK[1:8], names.arg = wrapped(sum_edu$Ed_level[1:8],8),
-        las=2, cex.names = 0.8, col = "#9e9ac8",
+        las=2, cex.names = 0.5, col = "#9e9ac8",
         main = "Sum of Different Education Levels",
         ylab = "People")
 
@@ -390,7 +403,7 @@ Once the outliers were identified for each post and undergraduate education leve
 
 ```{r echo=TRUE}
 
-#let's mutate post and grad into one (total counts)
+#Mutate postgraduate and undergradiate into one dataset
 edu_uni_tot <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
                                      UnderGrad = education$`Bachelor Degree Level`) %>% 
                               select(SA1, Post, UnderGrad)
@@ -399,17 +412,12 @@ edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME1
 head(edu_uni_tot2)
 glimpse(edu_uni_tot2)
 
-# visualize the totals
-box_post_tot <- boxplot(edu_uni_tot2[,2], main  = 'Post Grad Students per SA1')
-length(box_post_tot$out) 
-
-# 532 outliers for post grad
-
-box_under_tot <- boxplot(edu_uni_tot2[,3], main = 'UnderGrad Students per SA1')
-length(box_under_tot$out) 
-
-# 454 outliers for under grad
-
+#Visualise
+box_tot <- boxplot(edu_uni_tot2[,2:3], main  = 'Distribution of Population Qualifications',
+                        xlab = "Highest Educational Qualification", cex.axis = 0.55,
+                        names = c("Postgraduate", "Undergraduate"),
+                        ylab = "Population")
+length(box_tot$out)
 
 ```
 
@@ -417,23 +425,19 @@ There are 986 outliers for both postgraduate and undergraduate qualifications
 
 ```{r}
 
-# mutate post and grad into one (but as a proportion of the total)
+#Mutate post and grad into one dataset (using proportion of the total)
 edu_uni_prop <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`)/education$Total,
                                       UnderGrad = education$`Bachelor Degree Level`/education$Total) %>% 
                                 select(SA1, Post, UnderGrad)
 head(edu_uni_prop)
 glimpse(edu_uni_prop)
 
-# visualize the proportions
-box_post_prop <- boxplot(edu_uni_prop[,2], main = 'Proportion of Post Grad Students per SA1')
-length(box_post_prop$out) # 203 outliers, significant drop in outliers when you take into account the proportion
-box_under_prop <- boxplot(edu_uni_prop[,3], main = 'Proportion of Under Grad Students per SA1')
-length(box_under_prop$out) # 122 outliers
-
-boxplot(edu_uni_tot2[,2:3])
-boxplot(edu_uni_prop[,2:3]) # both visuals
-# finding proportions drastically reduces the count of outliers
-
+#Spread and then mutate the data
+box_tot_post <- boxplot(edu_uni_prop[,2:3], main  = 'Distribution of Population Qualifications',
+                        xlab = "Highest Educational Qualification", cex.axis = 0.55,
+                        names = c("Postgraduate", "Undergraduate"),
+                        ylab = "Population")
+length(box_tot_post$out)
 
 ```
 
@@ -453,8 +457,9 @@ edu_uni_lga$Ed_level <- factor(edu_uni_lga$Ed_level,
                                           "Bachelor Degree Level"),
                                levels = c("Postgraduate Degree Level", "Graduate Diploma and Graduate Certificate Level",
                                           "Bachelor Degree Level"))
+
 boxplot(edu_uni_lga$PeopleSum~edu_uni_lga$Ed_level,
-        main = "Distribution of People with Graduate Education",
+        main = "People with Graduate Education",
         xlab = "Highest Educational Qualification",
         cex.axis = 0.55, ylab = "Population") 
 
@@ -463,9 +468,9 @@ glimpse(education)
 edu_uni_tot_lga <- education %>%  mutate(Post = (education$`Postgraduate Degree Level` + education$`Graduate Diploma and Graduate Certificate Level`),
                                          UnderGrad = education$`Bachelor Degree Level`) %>% select(SA1, Post, UnderGrad)
 
-kable(head(edu_uni_tot))
+head(edu_uni_tot)
 edu_uni_tot2 <- edu_uni_tot %>% left_join(geo_lookup[, c('SA1_7DIG16','LGA_NAME17')], by = c('SA1' = 'SA1_7DIG16'))
-kable(head(edu_uni_tot2))
+head(edu_uni_tot2)
 
 ```
 
