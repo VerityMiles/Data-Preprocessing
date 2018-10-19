@@ -216,9 +216,7 @@ totalrow <- which(education$SA1 == 'Total')
 education <- education[1:totalrow - 1,] 
 kable(tail(education))
 
-#Drop the totals column before gathering education level as this does not belong as an observation
-edu_droptot <- education[,-13]
-names(edu_droptot)
+
 ```
 
 
@@ -230,9 +228,7 @@ names(edu_droptot)
 
 ####Data set 1: Education Levels
 
-The education data set does not conform to the the tidy data principles. Each variable should have its own column. Population count (or number of people) is a variable but it is not contained within its own column but spread out across the data set. 
-
-It could be argued that the levels of education qualify conceptually as a single variable, rather than a set of different variables, so each education level should be an observation in its own row.
+The education data set does not conform to the the tidy data principles. Each variable should have its own column. Population count (or number of people) is a variable but it is not contained within its own column but spread out across the data set. Though we have many columns, apart from SA1, they all refer to the variable education level. Therefore, we should have three columns for the three variables, SA1, Education Level and Number of People.
 
 To address this, the gather function has been applied to all the education levels to bring them into a single column called Ed_level. Now the data set is comprised of three attributes, statistical area (SA1), level of education and a count of people in each SA1 that meet a particular level of education.
 
@@ -246,7 +242,11 @@ This data set conforms to the tidy data principles.
 
 ```{r echo=TRUE}
 
-geo_lookup <- transform(geo_lookup, SA1_7DIG16 = as.character(SA1_7DIG16))
+
+
+#Drop the totals column before gathering education level as this does not belong as an observation
+edu_droptot <- education[,-13]
+names(edu_droptot)
 
 #Gathering column variables into a single row
 edu_tidy <- gather(edu_droptot, "Ed_level", "People", 2:length(edu_droptot)) 
@@ -274,6 +274,7 @@ The LGA variable in the LGA Lookup data set is called "LGA_NAME17" which is the 
 
 
 ```{r echo = TRUE}
+
 
 #Left Join Education Data to geographical area lookup to match observations to their LGA.
 edu_tidy_join <- edu_tidy %>% left_join(geo_lookup[,c("SA1_7DIG16", "LGA_NAME17", "MetroMelbourne")], by = c("SA1" = "SA1_7DIG16"))
@@ -308,7 +309,7 @@ glimpse(edu_by_LGA)
 
 ##	Scan I 
 
-The Education Levels by LGA data has been scanned for missing values (denoted by NA). 11 missing values where identfied in the LGA column using colSums. This makes sense as we have 11 attributes for education level so any counts of people where location data was not available would be recorded as NA. 11 out of 984 records is very small but each record is actually a count of people so if we exclude NAs by using complete.cases, we could end up excluding a large number of people counted. Checking tail(edu_by_LGA), we can see that the total number of counts for people without an LGA identified is 8,119. To determine if this is signficant, we divided the total number of people with missing values by the total number of people for each level of education. For every level, the proportion of NAs was insignificant, with the largest proportion of NAs comprising only 1.1% of total people in the Certificate I & II Level bracket. Therefore, we decided there was a low risk of bias if NAs were removed. We removed the recordes with missing LGA data using complete.cases. Another method we could have used to reduce the number of NAs is to re-examine the original Geographic Lookup table and identified why there were missing values present initially. Because this is a categorical value, we did not consider imputing with other values.
+The Education Levels by LGA data has been scanned for missing values (denoted by NA). 11 missing values where identfied in the LGA column using colSums. This makes sense as we have 11 attributes for education level so any counts of people where location data was not available would be recorded as NA. Since this is not a numeric variable, the NAs will not cause problems with computations but we may want to remove them anyway since they do not provide us with the information we need. 11 out of 984 records is very small but each record is actually a count of people so if we exclude NAs by using complete.cases, we could end up excluding a large number of people counted. Checking tail(edu_by_LGA), we can see that the total number of counts for people without an LGA identified is 8,119. To determine if this is signficant, we divided the total number of people with missing values by the total number of people for each level of education. For every level, the proportion of NAs was insignificant, with the largest proportion of NAs comprising only 1.1% of total people in the Certificate I & II Level bracket. Therefore, we decided there was a low risk of bias if NAs were removed. We removed the recordes with missing LGA data using complete.cases. Another method we could have used to reduce the number of NAs is to re-examine the original Geographic Lookup table and identified why there were missing values present initially. Because this is a categorical value, we did not consider imputing with other values.
 
 ```{r echo=TRUE}
 
@@ -326,7 +327,8 @@ edu_by_LGA_NA <- edu_by_LGA[!complete.cases(edu_by_LGA),]
 
 edu_by_LGA_Totals <- edu_tidy_join %>% group_by(Ed_level) %>% summarise(PeopleSum = sum(People)) 
 
-edu_by_LGA_ratio <- edu_by_LGA %>% mutate(ratio = edu_by_LGA_NA$PeopleSum/edu_by_LGA_Totals$PeopleSum) %>% select(LGA, Ed_level, ratio)
+edu_by_LGA_ratio <- edu_by_LGA %>% mutate(ratio = paste(round(edu_by_LGA_NA$PeopleSum/edu_by_LGA_Totals$PeopleSum*100, 2), "%")) %>% select(LGA, Ed_level, ratio)
+
 
 edu_by_LGA_ratio
 
@@ -423,13 +425,13 @@ head(edu_uni_prop)
 glimpse(edu_uni_prop)
 
 # visualize the proportions
-box_post_prop <- boxplot(edu_uni_prop2[,2], main = 'Proportion of Post Grad Students per SA1')
+box_post_prop <- boxplot(edu_uni_prop[,2], main = 'Proportion of Post Grad Students per SA1')
 length(box_post_prop$out) # 203 outliers, significant drop in outliers when you take into account the proportion
-box_under_prop <- boxplot(edu_uni_prop2[,3], main = 'Proportion of Under Grad Students per SA1')
+box_under_prop <- boxplot(edu_uni_prop[,3], main = 'Proportion of Under Grad Students per SA1')
 length(box_under_prop$out) # 122 outliers
 
 boxplot(edu_uni_tot2[,2:3])
-boxplot(edu_uni_prop2[,2:3]) # both visuals
+boxplot(edu_uni_prop[,2:3]) # both visuals
 # finding proportions drastically reduces the count of outliers
 
 
@@ -472,8 +474,8 @@ kable(head(edu_uni_tot2))
 ```{r}
 
 # Replace NAs with 0 values in the proportions (NA's occured due to 0/0 mutate)
-edu_uni_prop2[which(is.na(edu_uni_prop2$Post)),] <- 0
-edu_uni_prop2[which(is.na(edu_uni_prop2$UnderGrad)),] <- 0
+edu_uni_prop[which(is.na(edu_uni_prop$Post)),] <- 0
+edu_uni_prop[which(is.na(edu_uni_prop$UnderGrad)),] <- 0
 
 cap <- function(x){
   quantiles <- quantile( x, c(.05, 0.25, 0.75, .95 ) )
@@ -482,11 +484,11 @@ cap <- function(x){
   x
 } # from Module 6 of MATH 2349, credit to Dr Anil Dolgun
 
-post_cap <- cap(edu_uni_prop2$Post)
+post_cap <- cap(edu_uni_prop$Post)
 boxplot(post_cap, main = 'Proportion of Postgraduate Qualifications by LGA (Outliers Winsorised)')
 summary(post_cap)
 
-under_cap <- cap(edu_uni_prop2$UnderGrad)
+under_cap <- cap(edu_uni_prop$UnderGrad)
 boxplot(under_cap, main = 'Proportion of Undergraduate Qualifications by LGA (Outliers Winsorised)')
 summary(under_cap)
 
