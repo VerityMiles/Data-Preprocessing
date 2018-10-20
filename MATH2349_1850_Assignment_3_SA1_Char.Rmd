@@ -328,9 +328,9 @@ edu_by_LGA_NA <- edu_by_LGA[!complete.cases(edu_by_LGA),]
 
 edu_by_LGA_Totals <- edu_tidy_join %>% group_by(Ed_level) %>% summarise(PeopleSum = sum(People)) 
 
-edu_by_LGA_ratio <- edu_by_LGA %>% mutate(ratio = paste(round(edu_by_LGA_NA$PeopleSum/edu_by_LGA_Totals$PeopleSum*100, 2), "%")) %>% select(LGA, Ed_level, ratio)
+edu_by_LGA_ratio <- edu_by_LGA %>% mutate(ratio = paste(round(edu_by_LGA_NA$PeopleSum/edu_by_LGA_Totals$PeopleSum*100, 2), "%")) %>% select(LGA, Ed_level, ratio) %>% arrange(desc(ratio))
 
-edu_by_LGA_ratio
+head(edu_by_LGA_ratio, 10)
 
 #Remove NAs
 edu_by_LGA_complete <- edu_by_LGA[complete.cases(edu_by_LGA), ]
